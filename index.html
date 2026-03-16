@@ -3,385 +3,326 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GhostHire — Real-Time AI Interview Copilot</title>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Fraunces:opsz,wght@9..144,700;9..144,800;9..144,900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<!-- PDF.js for PDF parsing -->
+<title>GhostHire — AI Interview Copilot</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Fraunces:opsz,wght@9..144,700;9..144,800;9..144,900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<!-- Mammoth for DOCX parsing -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <style>
-:root {
-  --bg-base: #08090c;
-  --bg-surface: #0e1015;
-  --bg-raised: #14161d;
-  --bg-overlay: #1a1c25;
-  --bg-hover: #1f2230;
-  --border-subtle: rgba(255,255,255,0.05);
-  --border-focus: rgba(16,185,129,0.45);
-  --text-pri: #eaedf3;
-  --text-sec: #7c8097;
-  --text-ghost: #454860;
-  --green: #10b981;
-  --green-dim: rgba(16,185,129,0.15);
-  --green-glow: rgba(16,185,129,0.3);
-  --red: #f43f5e;
-  --red-dim: rgba(244,63,94,0.12);
-  --amber: #f59e0b;
-  --amber-dim: rgba(245,158,11,0.1);
-  --blue: #3b82f6;
-  --blue-dim: rgba(59,130,246,0.1);
-  --violet: #8b5cf6;
-  --violet-dim: rgba(139,92,246,0.12);
-  --grad-brand: linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%);
-  --font-body: 'Outfit', sans-serif;
-  --font-display: 'Fraunces', serif;
-  --font-mono: 'IBM Plex Mono', monospace;
-  --r-s: 8px; --r-m: 12px; --r-l: 18px; --r-xl: 24px;
+:root{
+  --bg0:#06070a;--bg1:#0c0d12;--bg2:#121318;--bg3:#181a22;--bg4:#1e2029;--bg5:#252733;
+  --bdr:rgba(255,255,255,0.05);--bdr2:rgba(255,255,255,0.08);
+  --t1:#f0f1f7;--t2:#9496a8;--t3:#5c5e72;--t4:#3a3c4e;
+  --g:#10b981;--g2:#059669;--gd:rgba(16,185,129,0.13);--gg:rgba(16,185,129,0.35);
+  --r:#f43f5e;--rd:rgba(244,63,94,0.12);
+  --a:#f59e0b;--ad:rgba(245,158,11,0.1);
+  --b:#3b82f6;--bd:rgba(59,130,246,0.1);
+  --v:#8b5cf6;--vd:rgba(139,92,246,0.12);
+  --cy:#06b6d4;--cyd:rgba(6,182,212,0.1);
+  --grad:linear-gradient(135deg,#10b981,#059669,#047857);
+  --grad2:linear-gradient(135deg,#10b981,#06b6d4);
+  --ff:'Outfit',sans-serif;--fd:'Fraunces',serif;--fm:'IBM Plex Mono',monospace;
+  --rs:8px;--rm:12px;--rl:18px;--rxl:24px;
 }
-
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{height:100%}
+body{font-family:var(--ff);background:var(--bg0);color:var(--t1);overflow:hidden;
+  background-image:radial-gradient(ellipse at 10% 90%,rgba(16,185,129,0.04),transparent 50%),radial-gradient(ellipse at 90% 10%,rgba(6,182,212,0.03),transparent 45%)}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;opacity:0.02;
+  background:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='f'%3E%3CfeTurbulence baseFrequency='0.8' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E")}
+::selection{background:var(--gd);color:var(--g)}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--bdr);border-radius:3px}
 
-body {
-  font-family: var(--font-body);
-  background: var(--bg-base);
-  color: var(--text-pri);
-  overflow: hidden;
-  background-image:
-    radial-gradient(ellipse at 15% 80%, rgba(16,185,129,0.04) 0%, transparent 50%),
-    radial-gradient(ellipse at 85% 15%, rgba(5,150,105,0.03) 0%, transparent 45%);
-}
+.topbar{height:50px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;border-bottom:1px solid var(--bdr);background:rgba(6,7,10,0.88);backdrop-filter:blur(16px);z-index:50;position:relative}
+.brand{display:flex;align-items:center;gap:9px}
+.brand-mark{width:26px;height:26px;border-radius:7px;background:var(--grad);display:grid;place-items:center;box-shadow:0 0 18px var(--gd)}
+.brand-mark svg{width:14px;height:14px}
+.brand-name{font-family:var(--fd);font-weight:800;font-size:16px;color:var(--g)}
+.tag{font-size:9px;font-weight:600;color:var(--t4);background:var(--bg3);border:1px solid var(--bdr);padding:2px 8px;border-radius:16px;letter-spacing:0.5px;text-transform:uppercase;font-family:var(--fm)}
 
-body::after {
-  content:'';position:fixed;inset:0;pointer-events:none;opacity:0.025;
-  background:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='f'%3E%3CfeTurbulence baseFrequency='0.85' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
-}
-
-::selection{background:var(--green-dim);color:var(--green)}
-::-webkit-scrollbar{width:5px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--border-subtle);border-radius:3px}
-
-/* ===== TOPBAR ===== */
-.topbar{height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;border-bottom:1px solid var(--border-subtle);background:rgba(8,9,12,0.85);backdrop-filter:blur(16px);position:relative;z-index:50}
-
-.brand{display:flex;align-items:center;gap:10px}
-.brand-mark{width:28px;height:28px;border-radius:8px;background:var(--grad-brand);display:grid;place-items:center;box-shadow:0 0 20px var(--green-dim)}
-.brand-mark svg{width:15px;height:15px}
-.brand-name{font-family:var(--font-display);font-weight:800;font-size:17px;letter-spacing:-0.3px;color:var(--green)}
-.brand-tag{font-size:10px;font-weight:500;color:var(--text-ghost);background:var(--bg-raised);border:1px solid var(--border-subtle);padding:2px 10px;border-radius:20px;letter-spacing:0.6px;text-transform:uppercase;font-family:var(--font-mono)}
-
-.topbar-right{display:flex;align-items:center;gap:10px}
-
-.status-pill{display:flex;align-items:center;gap:7px;padding:5px 14px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:0.3px;border:1px solid var(--border-subtle);background:var(--bg-raised);color:var(--text-ghost);transition:all 0.4s}
-.status-pill .pip{width:7px;height:7px;border-radius:50%;background:var(--text-ghost);transition:all 0.4s}
-.status-pill.live{border-color:rgba(16,185,129,0.25);color:var(--green);background:var(--green-dim)}
-.status-pill.live .pip{background:var(--green);box-shadow:0 0 10px var(--green-glow);animation:blink 1.8s infinite}
-
+.topbar-r{display:flex;align-items:center;gap:8px}
+.pill{display:flex;align-items:center;gap:6px;padding:4px 11px;border-radius:16px;font-size:10px;font-weight:600;border:1px solid var(--bdr);background:var(--bg3);color:var(--t3);cursor:pointer;transition:all 0.3s;letter-spacing:0.3px}
+.pill:hover{border-color:var(--bdr2);color:var(--t2)}
+.pill svg{width:13px;height:13px}
+.pill .pip{width:6px;height:6px;border-radius:50%;background:var(--t4);transition:all 0.4s}
+.pill.live{border-color:rgba(16,185,129,0.25);color:var(--g);background:var(--gd)}
+.pill.live .pip{background:var(--g);box-shadow:0 0 8px var(--gg);animation:blink 1.8s infinite}
+.pill.kb-on{border-color:rgba(139,92,246,0.25);color:var(--v);background:var(--vd)}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
 
-.btn-icon{width:34px;height:34px;border-radius:var(--r-s);border:1px solid var(--border-subtle);background:var(--bg-raised);color:var(--text-sec);cursor:pointer;display:grid;place-items:center;transition:all 0.2s}
-.btn-icon:hover{border-color:var(--green);color:var(--green)}
-.btn-icon svg{width:16px;height:16px}
+.btn-i{width:30px;height:30px;border-radius:var(--rs);border:1px solid var(--bdr);background:var(--bg3);color:var(--t3);cursor:pointer;display:grid;place-items:center;transition:all 0.2s}
+.btn-i:hover{border-color:var(--g);color:var(--g)}
+.btn-i svg{width:14px;height:14px}
 
-/* KB badge in topbar */
-.kb-pill{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:600;border:1px solid var(--border-subtle);background:var(--bg-raised);color:var(--text-ghost);cursor:pointer;transition:all 0.3s}
-.kb-pill:hover{border-color:var(--violet);color:var(--violet)}
-.kb-pill.loaded{border-color:rgba(139,92,246,0.3);color:var(--violet);background:var(--violet-dim)}
-.kb-pill svg{width:14px;height:14px}
+.timer{font-family:var(--fm);font-size:11px;color:var(--t3);letter-spacing:1px;min-width:55px;text-align:center}
 
-/* ===== SETUP SCREEN ===== */
-.setup-screen{position:fixed;inset:0;z-index:200;display:grid;place-items:center;background:rgba(8,9,12,0.95);backdrop-filter:blur(24px)}
-.setup-screen.gone{opacity:0;pointer-events:none;transition:opacity 0.5s}
+/* Setup */
+.setup{position:fixed;inset:0;z-index:200;display:grid;place-items:center;background:rgba(6,7,10,0.96);backdrop-filter:blur(24px)}
+.setup.gone{opacity:0;pointer-events:none;transition:opacity 0.4s}
+.sbox{width:560px;max-width:94vw;max-height:92vh;overflow-y:auto;background:var(--bg1);border:1px solid var(--bdr);border-radius:var(--rxl);padding:36px 32px;box-shadow:0 50px 120px rgba(0,0,0,0.7);animation:rise 0.5s cubic-bezier(0.16,1,0.3,1)}
+.sbox::-webkit-scrollbar{width:4px}
+@keyframes rise{from{opacity:0;transform:translateY(20px) scale(0.97)}to{opacity:1;transform:none}}
+.sbox h1{font-family:var(--fd);font-size:24px;font-weight:900;margin-bottom:4px;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.sbox .sub{font-size:13px;color:var(--t2);line-height:1.65;margin-bottom:24px}
+.fld{margin-bottom:14px}
+.fld label{display:block;font-size:10px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.fld input,.fld select,.fld textarea{width:100%;background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--rm);padding:12px 14px;color:var(--t1);font-family:var(--fm);font-size:12.5px;outline:none;transition:border-color 0.2s,box-shadow 0.2s}
+.fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--g);box-shadow:0 0 0 3px var(--gd)}
+.fld textarea{font-family:var(--ff);font-size:13px;min-height:60px;resize:vertical}
+.fld select{appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6' fill='%235c5e72'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+.fld select option{background:var(--bg1)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px}
 
-.setup-box{width:540px;max-width:92vw;max-height:90vh;overflow-y:auto;background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:var(--r-xl);padding:40px 36px;box-shadow:0 40px 100px rgba(0,0,0,0.6);animation:rise 0.55s cubic-bezier(0.16,1,0.3,1)}
+/* Answer tone selector */
+.tone-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.tone-opt{padding:12px 10px;border:1.5px solid var(--bdr);border-radius:var(--rm);background:var(--bg3);cursor:pointer;text-align:center;transition:all 0.25s}
+.tone-opt:hover{border-color:var(--bdr2);background:var(--bg4)}
+.tone-opt.active{border-color:var(--g);background:var(--gd)}
+.tone-opt .to-emoji{font-size:22px;margin-bottom:4px}
+.tone-opt .to-name{font-size:12px;font-weight:700;margin-bottom:2px}
+.tone-opt .to-desc{font-size:9.5px;color:var(--t3);line-height:1.4}
+.tone-opt.active .to-name{color:var(--g)}
+.tone-opt.active .to-desc{color:var(--t2)}
 
-@keyframes rise{from{opacity:0;transform:translateY(24px) scale(0.97)}to{opacity:1;transform:none}}
+/* KB */
+.kb-sec{margin:16px 0}
+.kb-title{display:flex;align-items:center;gap:7px;font-size:10px;font-weight:700;color:var(--v);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
+.kb-title svg{width:15px;height:15px}
+.uz{border:2px dashed rgba(139,92,246,0.2);border-radius:var(--rm);padding:22px 16px;text-align:center;cursor:pointer;transition:all 0.3s;background:rgba(139,92,246,0.02);position:relative}
+.uz:hover{border-color:rgba(139,92,246,0.4);background:rgba(139,92,246,0.05)}
+.uz.over{border-color:var(--v);background:var(--vd)}
+.uz input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.uz-ico{width:40px;height:40px;border-radius:11px;background:var(--vd);display:grid;place-items:center;margin:0 auto 8px}
+.uz-ico svg{width:18px;height:18px;color:var(--v)}
+.uz h4{font-size:12.5px;font-weight:600;margin-bottom:2px}
+.uz p{font-size:10px;color:var(--t4);line-height:1.4}
+.flist{margin-top:8px;display:flex;flex-direction:column;gap:5px}
+.fchip{display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--rm);animation:rise 0.3s}
+.fchip .fc-i{width:26px;height:26px;border-radius:6px;display:grid;place-items:center;flex-shrink:0;font-size:8px;font-weight:700;text-transform:uppercase}
+.fc-i.pdf{background:var(--rd);color:var(--r)}.fc-i.doc{background:var(--bd);color:var(--b)}.fc-i.txt{background:var(--gd);color:var(--g)}.fc-i.csv{background:var(--ad);color:var(--a)}.fc-i.other{background:var(--vd);color:var(--v)}
+.fchip .fc-inf{flex:1;min-width:0}
+.fchip .fc-n{font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fchip .fc-m{font-size:8.5px;color:var(--t4);font-family:var(--fm);margin-top:1px}
+.fc-st{font-size:8.5px;font-weight:600;padding:2px 6px;border-radius:8px;white-space:nowrap}
+.fc-st.parsing{background:var(--ad);color:var(--a)}.fc-st.ready{background:var(--gd);color:var(--g)}.fc-st.error{background:var(--rd);color:var(--r)}
+.fchip .fc-x{width:20px;height:20px;border-radius:5px;border:none;background:transparent;color:var(--t4);cursor:pointer;display:grid;place-items:center;transition:all 0.2s;flex-shrink:0}
+.fchip .fc-x:hover{background:var(--rd);color:var(--r)}
+.fchip .fc-x svg{width:11px;height:11px}
+.kb-sum{font-size:9.5px;color:var(--t4);margin-top:5px;font-family:var(--fm)}
+.kb-sum span{color:var(--v);font-weight:600}
 
-.setup-box h1{font-family:var(--font-display);font-size:26px;font-weight:900;margin-bottom:6px;background:var(--grad-brand);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.setup-box .subtitle{font-size:13.5px;color:var(--text-sec);line-height:1.65;margin-bottom:28px}
+.btn-go{width:100%;margin-top:8px;padding:14px;border:none;border-radius:var(--rm);background:var(--grad);color:white;font-family:var(--ff);font-size:14px;font-weight:700;cursor:pointer;transition:transform 0.12s,box-shadow 0.3s;box-shadow:0 0 28px var(--gd)}
+.btn-go:hover{transform:translateY(-1px);box-shadow:0 0 50px var(--gg)}.btn-go:active{transform:translateY(0)}
+.lock{display:flex;align-items:center;gap:6px;margin-top:10px;font-size:9.5px;color:var(--t4)}
+.lock svg{width:12px;height:12px;flex-shrink:0}
 
-.field{margin-bottom:16px}
-.field label{display:block;font-size:11px;font-weight:600;color:var(--text-sec);text-transform:uppercase;letter-spacing:0.9px;margin-bottom:7px}
-.field input,.field select,.field textarea{width:100%;background:var(--bg-raised);border:1px solid var(--border-subtle);border-radius:var(--r-m);padding:13px 15px;color:var(--text-pri);font-family:var(--font-mono);font-size:13px;outline:none;transition:border-color 0.2s,box-shadow 0.2s}
-.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--green);box-shadow:0 0 0 3px var(--green-dim)}
-.field textarea{font-family:var(--font-body);font-size:13.5px;min-height:70px;resize:vertical}
-.field select{appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6' fill='%237c8097'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center}
-.field select option{background:var(--bg-surface)}
-.row-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-
-/* ===== KNOWLEDGE BASE UPLOAD SECTION ===== */
-.kb-section{margin-bottom:20px}
-.kb-section .section-title{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;color:var(--violet);text-transform:uppercase;letter-spacing:0.9px;margin-bottom:12px}
-.kb-section .section-title svg{width:16px;height:16px}
-
-.upload-zone{border:2px dashed rgba(139,92,246,0.25);border-radius:var(--r-m);padding:28px 20px;text-align:center;cursor:pointer;transition:all 0.3s;background:rgba(139,92,246,0.03);position:relative}
-.upload-zone:hover{border-color:rgba(139,92,246,0.45);background:rgba(139,92,246,0.06)}
-.upload-zone.dragover{border-color:var(--violet);background:var(--violet-dim);transform:scale(1.01)}
-.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer}
-
-.upload-zone .uz-icon{width:48px;height:48px;border-radius:14px;background:var(--violet-dim);display:grid;place-items:center;margin:0 auto 12px}
-.upload-zone .uz-icon svg{width:22px;height:22px;color:var(--violet)}
-.upload-zone h4{font-size:14px;font-weight:600;color:var(--text-pri);margin-bottom:4px}
-.upload-zone p{font-size:11.5px;color:var(--text-ghost);line-height:1.5}
-
-.file-list{margin-top:12px;display:flex;flex-direction:column;gap:8px}
-
-.file-chip{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg-raised);border:1px solid var(--border-subtle);border-radius:var(--r-m);animation:rise 0.3s ease}
-
-.file-chip .fc-icon{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;flex-shrink:0;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px}
-.fc-icon.pdf{background:var(--red-dim);color:var(--red)}
-.fc-icon.doc{background:var(--blue-dim);color:var(--blue)}
-.fc-icon.txt{background:var(--green-dim);color:var(--green)}
-.fc-icon.csv{background:var(--amber-dim);color:var(--amber)}
-.fc-icon.other{background:var(--violet-dim);color:var(--violet)}
-
-.file-chip .fc-info{flex:1;min-width:0}
-.file-chip .fc-name{font-size:12.5px;font-weight:600;color:var(--text-pri);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.file-chip .fc-meta{font-size:10px;color:var(--text-ghost);font-family:var(--font-mono);margin-top:2px}
-
-.file-chip .fc-status{font-size:10px;font-weight:600;padding:3px 8px;border-radius:10px;white-space:nowrap}
-.fc-status.parsing{background:var(--amber-dim);color:var(--amber)}
-.fc-status.ready{background:var(--green-dim);color:var(--green)}
-.fc-status.error{background:var(--red-dim);color:var(--red)}
-
-.file-chip .fc-remove{width:24px;height:24px;border-radius:6px;border:none;background:transparent;color:var(--text-ghost);cursor:pointer;display:grid;place-items:center;transition:all 0.2s;flex-shrink:0}
-.file-chip .fc-remove:hover{background:var(--red-dim);color:var(--red)}
-.file-chip .fc-remove svg{width:14px;height:14px}
-
-.kb-summary{font-size:11px;color:var(--text-ghost);margin-top:8px;font-family:var(--font-mono);letter-spacing:0.3px}
-.kb-summary span{color:var(--violet);font-weight:600}
-
-.btn-go{width:100%;margin-top:10px;padding:15px;border:none;border-radius:var(--r-m);background:var(--grad-brand);color:white;font-family:var(--font-body);font-size:15px;font-weight:700;cursor:pointer;letter-spacing:0.2px;transition:transform 0.12s,box-shadow 0.3s;box-shadow:0 0 30px var(--green-dim)}
-.btn-go:hover{transform:translateY(-1px);box-shadow:0 0 50px var(--green-glow)}
-.btn-go:active{transform:translateY(0)}
-
-.lock-note{display:flex;align-items:center;gap:7px;margin-top:14px;font-size:10.5px;color:var(--text-ghost)}
-.lock-note svg{width:13px;height:13px;flex-shrink:0}
-
-/* ===== MAIN LAYOUT ===== */
-.app{display:grid;grid-template-columns:1fr 1fr;height:calc(100vh - 52px)}
+/* App */
+.app{display:grid;grid-template-columns:1fr 1fr;height:calc(100vh - 50px)}
 .col{display:flex;flex-direction:column;overflow:hidden}
-.col-left{border-right:1px solid var(--border-subtle)}
+.col-l{border-right:1px solid var(--bdr)}
+.ch{height:42px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid var(--bdr);flex-shrink:0;background:var(--bg1)}
+.cl{display:flex;align-items:center;gap:7px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.7px;color:var(--t2)}
+.cl .dot{width:5px;height:5px;border-radius:50%;background:var(--t4);transition:all 0.3s}
+.cl .dot.on{background:var(--r);box-shadow:0 0 8px var(--rd);animation:blink 1.2s infinite}
+.cm{font-family:var(--fm);font-size:9px;color:var(--t4)}
+.cb{flex:1;overflow-y:auto;padding:14px}
 
-.col-head{height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;border-bottom:1px solid var(--border-subtle);flex-shrink:0;background:var(--bg-surface)}
-.col-label{display:flex;align-items:center;gap:8px;font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:0.7px;color:var(--text-sec)}
-.col-label .ind{width:5px;height:5px;border-radius:50%;background:var(--text-ghost);transition:all 0.3s}
-.col-label .ind.on{background:var(--red);box-shadow:0 0 8px var(--red-dim);animation:blink 1.2s infinite}
-.col-meta{font-family:var(--font-mono);font-size:10px;color:var(--text-ghost)}
+/* Capture bar */
+.capbar{padding:10px 14px;border-top:1px solid var(--bdr);display:flex;align-items:center;gap:10px;background:var(--bg1);flex-shrink:0}
+.btn-cap{height:40px;padding:0 18px;border-radius:var(--rm);border:1.5px solid var(--g);background:var(--gd);color:var(--g);font-family:var(--ff);font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:7px;transition:all 0.25s;white-space:nowrap}
+.btn-cap:hover{background:rgba(16,185,129,0.2)}
+.btn-cap svg{width:15px;height:15px}
+.btn-cap.on{border-color:var(--r);background:var(--rd);color:var(--r);animation:capG 2s infinite}
+@keyframes capG{0%,100%{box-shadow:0 0 0 0 rgba(244,63,94,0.2)}50%{box-shadow:0 0 0 6px rgba(244,63,94,0)}}
+.wv{flex:1;height:30px;display:flex;align-items:center;justify-content:center;gap:2px;opacity:0.15;transition:opacity 0.3s}
+.wv.active{opacity:1}
+.wv .w{width:2px;background:var(--g);border-radius:2px;height:4px;transition:height 0.08s}
+.ci{font-size:10px;color:var(--t4);font-weight:500;min-width:80px;text-align:right;white-space:nowrap}
+.ci.on{color:var(--g)}.ci.busy{color:var(--a)}
 
-.col-body{flex:1;overflow-y:auto;padding:20px}
+/* Floating tap */
+.tap-float{position:sticky;bottom:0;left:0;right:0;z-index:10;padding:8px 14px 12px;background:linear-gradient(to top,var(--bg1) 65%,transparent);display:none;flex-direction:column;align-items:center;gap:5px}
+.tap-float.show{display:flex}
+.btn-tap{width:100%;max-width:380px;height:48px;border-radius:var(--rl);border:1.5px solid var(--cy);background:linear-gradient(135deg,rgba(6,182,212,0.1),rgba(16,185,129,0.06));color:var(--cy);font-family:var(--ff);font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.25s;position:relative;overflow:hidden}
+.btn-tap::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(6,182,212,0.06),transparent);animation:shim 3s infinite}
+@keyframes shim{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+.btn-tap:hover{background:linear-gradient(135deg,rgba(6,182,212,0.18),rgba(16,185,129,0.1));box-shadow:0 0 40px rgba(6,182,212,0.15);transform:scale(1.01)}
+.btn-tap:active{transform:scale(0.98)}
+.btn-tap svg,.btn-tap span{position:relative;z-index:1}
+.btn-tap svg{width:18px;height:18px}
+.btn-tap.loading{pointer-events:none;color:var(--a);border-color:var(--a)}
+.tap-hint{font-size:9px;color:var(--t4);display:flex;align-items:center;gap:4px}
+.tap-hint kbd{background:var(--bg4);border:1px solid var(--bdr2);border-radius:3px;padding:1px 5px;font-family:var(--fm);font-size:8px;color:var(--t3)}
 
-/* ===== CAPTURE BAR ===== */
-.capture-bar{padding:14px 20px;border-top:1px solid var(--border-subtle);display:flex;align-items:center;gap:14px;background:var(--bg-surface);flex-shrink:0}
+/* Per-block tap */
+.t-item .mini-tap{display:inline-flex;align-items:center;gap:4px;margin-top:6px;padding:4px 10px;border-radius:16px;border:1px solid rgba(6,182,212,0.18);background:rgba(6,182,212,0.04);color:var(--cy);font-size:9.5px;font-weight:600;cursor:pointer;transition:all 0.2s}
+.t-item .mini-tap:hover{background:rgba(6,182,212,0.12);border-color:rgba(6,182,212,0.35)}
+.t-item .mini-tap svg{width:11px;height:11px}
+.t-item .mini-tap.sent{color:var(--g);border-color:rgba(16,185,129,0.2);background:var(--gd);pointer-events:none}
 
-.btn-capture{height:46px;padding:0 24px;border-radius:var(--r-m);border:1.5px solid var(--green);background:var(--green-dim);color:var(--green);font-family:var(--font-body);font-size:13.5px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:9px;transition:all 0.25s;white-space:nowrap}
-.btn-capture:hover{background:rgba(16,185,129,0.2);box-shadow:0 0 24px var(--green-dim)}
-.btn-capture svg{width:18px;height:18px}
-.btn-capture.capturing{border-color:var(--red);background:var(--red-dim);color:var(--red);animation:capGlow 2s infinite}
+/* Transcript */
+.t-item{margin-bottom:12px;animation:fup 0.3s ease}
+@keyframes fup{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.t-meta{font-size:8.5px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--t4);margin-bottom:4px;display:flex;align-items:center;gap:7px}
+.t-meta .ts{font-family:var(--fm);font-size:8.5px;opacity:0.5}
+.t-blk{font-size:13px;line-height:1.65;padding:11px 14px;background:var(--bg3);border-radius:var(--rm);border-left:3px solid var(--t4);color:var(--t1)}
 
-@keyframes capGlow{0%,100%{box-shadow:0 0 0 0 rgba(244,63,94,0.2)}50%{box-shadow:0 0 0 8px rgba(244,63,94,0)}}
+.q-card{background:rgba(16,185,129,0.05);border:1px solid rgba(16,185,129,0.12);border-radius:var(--rm);padding:11px 14px;margin-bottom:10px;animation:pop 0.4s cubic-bezier(0.16,1,0.3,1)}
+@keyframes pop{from{opacity:0;transform:scale(0.96)}to{opacity:1;transform:none}}
+.q-card .qt{display:inline-flex;align-items:center;gap:4px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--g);margin-bottom:5px}
+.q-card .qt svg{width:11px;height:11px}
+.q-card .qb{font-size:13.5px;font-weight:500;line-height:1.5}
 
-.wave-display{flex:1;height:36px;display:flex;align-items:center;justify-content:center;gap:2.5px;opacity:0.2;transition:opacity 0.3s}
-.wave-display.active{opacity:1}
-.wave-display .w{width:2.5px;background:var(--green);border-radius:2px;height:6px;transition:height 0.08s}
+/* Answer cards */
+.a-card{background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--rl);padding:18px;margin-bottom:12px;animation:sla 0.5s cubic-bezier(0.16,1,0.3,1);position:relative}
+.a-card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--grad2);border-radius:var(--rl) var(--rl) 0 0}
+@keyframes sla{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.a-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.a-badges{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+.a-bdg{display:flex;align-items:center;gap:5px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.7px;color:var(--g)}
+.a-bdg svg{width:13px;height:13px}
+.small-tag{font-size:7.5px;font-weight:700;padding:2px 6px;border-radius:6px;letter-spacing:0.3px;text-transform:uppercase}
+.tag-kb{background:var(--vd);color:var(--v)}.tag-tap{background:var(--cyd);color:var(--cy)}.tag-speed{background:var(--bg4);color:var(--t3);font-family:var(--fm)}
 
-.capture-info{font-size:11px;color:var(--text-ghost);font-weight:500;min-width:100px;text-align:right;white-space:nowrap}
-.capture-info.on{color:var(--green)}
-.capture-info.busy{color:var(--amber)}
+.a-acts{display:flex;gap:3px}
+.a-btn{width:26px;height:26px;border-radius:5px;border:1px solid var(--bdr);background:var(--bg4);color:var(--t4);cursor:pointer;display:grid;place-items:center;transition:all 0.2s}
+.a-btn:hover{border-color:var(--g);color:var(--g)}
+.a-btn svg{width:11px;height:11px}
 
-/* ===== TRANSCRIPT ITEMS ===== */
-.t-item{margin-bottom:16px;animation:fadeUp 0.35s ease}
+.a-q{font-size:11.5px;color:var(--t2);font-style:italic;padding-bottom:9px;margin-bottom:9px;border-bottom:1px solid var(--bdr);line-height:1.45}
+.a-body{font-size:14px;line-height:1.8;color:var(--t1)}
+.a-body p{margin-bottom:7px}.a-body p:last-child{margin-bottom:0}
 
-@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.dots{display:flex;gap:4px;padding:10px 0}
+.dots span{width:6px;height:6px;border-radius:50%;background:var(--g);animation:bnc 1.3s infinite}
+.dots span:nth-child(2){animation-delay:0.18s}.dots span:nth-child(3){animation-delay:0.36s}
+@keyframes bnc{0%,70%,100%{transform:translateY(0);opacity:0.25}35%{transform:translateY(-6px);opacity:1}}
 
-.t-meta{font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text-ghost);margin-bottom:6px;display:flex;align-items:center;gap:8px}
-.t-meta .ts{font-family:var(--font-mono);font-size:9.5px;opacity:0.5}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;padding:32px}
+.empty-ico{width:52px;height:52px;border-radius:14px;background:var(--bg4);border:1px solid var(--bdr);display:grid;place-items:center;margin-bottom:12px}
+.empty-ico svg{width:22px;height:22px;color:var(--t4)}
+.empty h3{font-size:13px;font-weight:600;color:var(--t2);margin-bottom:4px}
+.empty p{font-size:11px;color:var(--t4);max-width:230px;line-height:1.5}
 
-.t-block{font-size:14px;line-height:1.7;padding:14px 18px;background:var(--bg-raised);border-radius:var(--r-m);border-left:3px solid var(--text-ghost);color:var(--text-pri)}
-
-.q-card{background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.15);border-radius:var(--r-m);padding:14px 18px;margin-bottom:14px;animation:popIn 0.4s cubic-bezier(0.16,1,0.3,1)}
-
-@keyframes popIn{from{opacity:0;transform:scale(0.96)}to{opacity:1;transform:none}}
-
-.q-card .q-tag{display:inline-flex;align-items:center;gap:5px;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--green);margin-bottom:8px}
-.q-card .q-tag svg{width:13px;height:13px}
-.q-card .q-body{font-size:15px;font-weight:500;line-height:1.55}
-
-/* ===== ANSWER CARDS ===== */
-.a-card{background:var(--bg-raised);border:1px solid var(--border-subtle);border-radius:var(--r-l);padding:22px;margin-bottom:16px;animation:slideA 0.5s cubic-bezier(0.16,1,0.3,1);position:relative}
-.a-card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--grad-brand);border-radius:var(--r-l) var(--r-l) 0 0}
-
-@keyframes slideA{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
-
-.a-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
-
-.a-badge{display:flex;align-items:center;gap:6px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--green)}
-.a-badge svg{width:15px;height:15px}
-
-.a-badges{display:flex;gap:6px;align-items:center}
-
-.kb-used-tag{font-size:9px;font-weight:600;padding:3px 8px;border-radius:10px;background:var(--violet-dim);color:var(--violet);letter-spacing:0.4px;text-transform:uppercase}
-
-.a-copy{width:30px;height:30px;border-radius:var(--r-s);border:1px solid var(--border-subtle);background:var(--bg-overlay);color:var(--text-ghost);cursor:pointer;display:grid;place-items:center;transition:all 0.2s}
-.a-copy:hover{border-color:var(--green);color:var(--green)}
-.a-copy svg{width:13px;height:13px}
-
-.a-question{font-size:12.5px;color:var(--text-sec);font-style:italic;padding-bottom:12px;margin-bottom:12px;border-bottom:1px solid var(--border-subtle);line-height:1.5}
-
-.a-body{font-size:14.5px;line-height:1.85;color:var(--text-pri);font-weight:400}
-.a-body p{margin-bottom:10px}
-.a-body p:last-child{margin-bottom:0}
-.a-body strong{color:var(--green);font-weight:600}
-
-.dots{display:flex;gap:5px;padding:14px 0}
-.dots span{width:7px;height:7px;border-radius:50%;background:var(--green);animation:bounce 1.3s infinite}
-.dots span:nth-child(2){animation-delay:0.18s}
-.dots span:nth-child(3){animation-delay:0.36s}
-
-@keyframes bounce{0%,70%,100%{transform:translateY(0);opacity:0.25}35%{transform:translateY(-7px);opacity:1}}
-
-/* Empty */
-.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;padding:40px}
-.empty-ico{width:64px;height:64px;border-radius:18px;background:var(--bg-overlay);border:1px solid var(--border-subtle);display:grid;place-items:center;margin-bottom:16px}
-.empty-ico svg{width:28px;height:28px;color:var(--text-ghost)}
-.empty h3{font-size:15px;font-weight:600;color:var(--text-sec);margin-bottom:6px}
-.empty p{font-size:12.5px;color:var(--text-ghost);max-width:260px;line-height:1.6}
-
-/* Toast */
-.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--bg-raised);border:1px solid var(--border-subtle);border-radius:var(--r-m);padding:12px 22px;font-size:12.5px;font-weight:500;box-shadow:0 12px 48px rgba(0,0,0,0.5);z-index:400;transition:transform 0.4s cubic-bezier(0.16,1,0.3,1);display:flex;align-items:center;gap:8px}
+.toast{position:fixed;bottom:14px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--rm);padding:9px 18px;font-size:11.5px;font-weight:500;box-shadow:0 12px 48px rgba(0,0,0,0.5);z-index:400;transition:transform 0.4s cubic-bezier(0.16,1,0.3,1);display:flex;align-items:center;gap:6px}
 .toast.show{transform:translateX(-50%) translateY(0)}
-.toast.err{border-color:rgba(244,63,94,0.3);color:var(--red)}
-.toast.ok{border-color:rgba(16,185,129,0.3);color:var(--green)}
+.toast.err{border-color:rgba(244,63,94,0.3);color:var(--r)}
+.toast.ok{border-color:rgba(16,185,129,0.3);color:var(--g)}
 
-@media(max-width:800px){
-  .app{grid-template-columns:1fr;grid-template-rows:1fr 1fr}
-  .col-left{border-right:none;border-bottom:1px solid var(--border-subtle)}
-  .setup-box{padding:28px 22px}
-}
+@media(max-width:800px){.app{grid-template-columns:1fr;grid-template-rows:1fr 1fr}.col-l{border-right:none;border-bottom:1px solid var(--bdr)}.sbox{padding:24px 16px}.row4{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
 
-<!-- TOPBAR -->
 <header class="topbar">
   <div class="brand">
     <div class="brand-mark"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/></svg></div>
     <span class="brand-name">GhostHire</span>
-    <span class="brand-tag" id="modelTag">Whisper + GPT-4o</span>
+    <span class="tag" id="mTag">Whisper + GPT-4o</span>
   </div>
-  <div class="topbar-right">
-    <button class="kb-pill" id="kbPill" onclick="openSetup()" title="Knowledge Base">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
-      <span id="kbPillText">No docs</span>
-    </button>
-    <div class="status-pill" id="statusPill">
-      <span class="pip"></span>
-      <span id="statusLabel">Offline</span>
-    </div>
-    <button class="btn-icon" onclick="openSetup()" title="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12.22 2h-.44a2 2 0 00-2 2v.18a2 2 0 01-1 1.73l-.43.25a2 2 0 01-2 0l-.15-.08a2 2 0 00-2.73.73l-.22.38a2 2 0 00.73 2.73l.15.1a2 2 0 011 1.72v.51a2 2 0 01-1 1.74l-.15.09a2 2 0 00-.73 2.73l.22.38a2 2 0 002.73.73l.15-.08a2 2 0 012 0l.43.25a2 2 0 011 1.73V20a2 2 0 002 2h.44a2 2 0 002-2v-.18a2 2 0 011-1.73l.43-.25a2 2 0 012 0l.15.08a2 2 0 002.73-.73l.22-.39a2 2 0 00-.73-2.73l-.15-.08a2 2 0 01-1-1.74v-.5a2 2 0 011-1.74l.15-.09a2 2 0 00.73-2.73l-.22-.38a2 2 0 00-2.73-.73l-.15.08a2 2 0 01-2 0l-.43-.25a2 2 0 01-1-1.73V4a2 2 0 00-2-2z"/><circle cx="12" cy="12" r="3"/></svg></button>
+  <div class="topbar-r">
+    <span class="timer" id="timer">00:00</span>
+    <div class="pill" id="kbPill" onclick="openSetup()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg><span id="kbTxt">No docs</span></div>
+    <div class="pill" id="sPill"><span class="pip"></span><span id="sLbl">Offline</span></div>
+    <button class="btn-i" onclick="openSetup()" title="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12.22 2h-.44a2 2 0 00-2 2v.18a2 2 0 01-1 1.73l-.43.25a2 2 0 01-2 0l-.15-.08a2 2 0 00-2.73.73l-.22.38a2 2 0 00.73 2.73l.15.1a2 2 0 011 1.72v.51a2 2 0 01-1 1.74l-.15.09a2 2 0 00-.73 2.73l.22.38a2 2 0 002.73.73l.15-.08a2 2 0 012 0l.43.25a2 2 0 011 1.73V20a2 2 0 002 2h.44a2 2 0 002-2v-.18a2 2 0 011-1.73l.43-.25a2 2 0 012 0l.15.08a2 2 0 002.73-.73l.22-.39a2 2 0 00-.73-2.73l-.15-.08a2 2 0 01-1-1.74v-.5a2 2 0 011-1.74l.15-.09a2 2 0 00.73-2.73l-.22-.38a2 2 0 00-2.73-.73l-.15.08a2 2 0 01-2 0l-.43-.25a2 2 0 01-1-1.73V4a2 2 0 00-2-2z"/><circle cx="12" cy="12" r="3"/></svg></button>
   </div>
 </header>
 
 <!-- SETUP -->
-<div class="setup-screen" id="setupScreen">
-  <div class="setup-box">
-    <h1>Set Up GhostHire</h1>
-    <p class="subtitle">Your invisible interview copilot. Captures system audio via screen share, transcribes with Whisper, and gives you instant human-sounding answers. Upload your docs and it gets even smarter.</p>
+<div class="setup" id="setup">
+  <div class="sbox">
+    <h1>GhostHire Setup</h1>
+    <p class="sub">Captures system audio from screen share, sends to Whisper, gives you short simple answers. Upload docs for better answers. Tap button when AI misses a question.</p>
 
-    <div class="field">
-      <label>OpenAI API Key</label>
-      <input type="password" id="inKey" placeholder="sk-proj-..." autocomplete="off" spellcheck="false">
+    <div class="fld"><label>OpenAI API Key</label><input type="password" id="inKey" placeholder="sk-proj-..." autocomplete="off" spellcheck="false"></div>
+
+    <div class="row2">
+      <div class="fld"><label>Model</label><select id="inModel"><option value="gpt-4o">GPT-4o</option><option value="gpt-4o-mini">GPT-4o Mini</option><option value="gpt-4-turbo">GPT-4 Turbo</option></select></div>
+      <div class="fld"><label>Interview Type</label><select id="inType"><option value="general">General</option><option value="technical">Technical</option><option value="behavioral">Behavioral</option><option value="system-design">System Design</option><option value="product">Product / PM</option><option value="consulting">Case Study</option></select></div>
     </div>
 
-    <div class="row-2">
-      <div class="field">
-        <label>Chat Model</label>
-        <select id="inModel">
-          <option value="gpt-4o">GPT-4o (Best)</option>
-          <option value="gpt-4o-mini">GPT-4o Mini (Fast)</option>
-          <option value="gpt-4-turbo">GPT-4 Turbo</option>
-        </select>
+    <!-- ANSWER TONE -->
+    <div class="fld">
+      <label>Answer Style</label>
+      <div class="tone-grid">
+        <div class="tone-opt active" data-tone="simple" onclick="pickTone(this)">
+          <div class="to-emoji">🎯</div>
+          <div class="to-name">Simple & Short</div>
+          <div class="to-desc">Basic words. Straight to point. No filler.</div>
+        </div>
+        <div class="tone-opt" data-tone="pro" onclick="pickTone(this)">
+          <div class="to-emoji">💼</div>
+          <div class="to-name">Professional</div>
+          <div class="to-desc">Clean and polished. Office-ready.</div>
+        </div>
+        <div class="tone-opt" data-tone="friendly" onclick="pickTone(this)">
+          <div class="to-emoji">😊</div>
+          <div class="to-name">Friendly</div>
+          <div class="to-desc">Warm and easy. Like talking to a friend.</div>
+        </div>
       </div>
-      <div class="field">
-        <label>Interview Type</label>
-        <select id="inType">
-          <option value="general">General</option>
-          <option value="technical">Technical / Coding</option>
-          <option value="behavioral">Behavioral (STAR)</option>
-          <option value="system-design">System Design</option>
-          <option value="product">Product / PM</option>
-          <option value="consulting">Case Study</option>
-        </select>
+    </div>
+
+    <div class="fld"><label>Your Background (optional)</label><textarea id="inCtx" placeholder="e.g. 4 years full-stack developer, React + Node, worked at a fintech startup..."></textarea></div>
+
+    <div class="kb-sec">
+      <div class="kb-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>Upload Docs (Resume, JD, Notes)</div>
+      <div class="uz" id="uz">
+        <input type="file" id="fIn" multiple accept=".pdf,.docx,.doc,.txt,.csv,.json,.md,.rtf">
+        <div class="uz-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+        <h4>Drop files or click to upload</h4>
+        <p>PDF, DOCX, TXT, CSV, JSON, MD</p>
       </div>
+      <div class="flist" id="flist"></div>
+      <div class="kb-sum" id="kbSum"></div>
     </div>
 
-    <div class="field">
-      <label>Your Background (optional)</label>
-      <textarea id="inContext" placeholder="e.g. 4 years full-stack dev, React + Node, worked at a fintech startup..."></textarea>
-    </div>
-
-    <!-- KNOWLEDGE BASE UPLOAD -->
-    <div class="kb-section">
-      <div class="section-title">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
-        Knowledge Base — Upload Your Docs
-      </div>
-
-      <div class="upload-zone" id="uploadZone">
-        <input type="file" id="fileInput" multiple accept=".pdf,.docx,.doc,.txt,.csv,.json,.md,.rtf">
-        <div class="uz-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
-        <h4>Drop files here or click to upload</h4>
-        <p>Resume, Job Description, Company Info, Notes — PDF, DOCX, TXT, CSV, JSON, MD</p>
-      </div>
-
-      <div class="file-list" id="fileList"></div>
-      <div class="kb-summary" id="kbSummary"></div>
-    </div>
-
-    <button class="btn-go" onclick="launch()">Start Copilot →</button>
-
-    <div class="lock-note">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-      Everything stays in your browser. Files are parsed locally — never uploaded to any server except OpenAI for answers.
-    </div>
+    <button class="btn-go" onclick="launch()">Start →</button>
+    <div class="lock"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>Files stay in browser. Key only goes to OpenAI.</div>
   </div>
 </div>
 
-<!-- MAIN -->
+<!-- APP -->
 <main class="app">
-  <div class="col col-left">
-    <div class="col-head">
-      <div class="col-label"><span class="ind" id="recInd"></span> Live Transcript</div>
-      <button class="btn-icon" onclick="clearLeft()" title="Clear"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+  <div class="col col-l">
+    <div class="ch">
+      <div class="cl"><span class="dot" id="rInd"></span> Transcript</div>
+      <button class="btn-i" onclick="clearLeft()" title="Clear"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
     </div>
-    <div class="col-body" id="leftBody">
-      <div class="empty" id="leftEmpty">
+    <div class="cb" id="lB">
+      <div class="empty" id="lE">
         <div class="empty-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
-        <h3>Share your screen to begin</h3>
-        <p>Click the button below — pick any screen/tab and enable "Share system audio".</p>
+        <h3>Share screen to begin</h3>
+        <p>Click below, pick a screen/tab, check "Share system audio".</p>
       </div>
     </div>
-    <div class="capture-bar">
-      <button class="btn-capture" id="captureBtn" onclick="toggleCapture()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-        <span id="capBtnTxt">Share Screen + Audio</span>
+    <div class="tap-float" id="tapF">
+      <button class="btn-tap" id="tapBtn" onclick="manualTap()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5"/></svg>
+        <span id="tapTxt">⚡ Tap to Answer</span>
       </button>
-      <div class="wave-display" id="waveBox"></div>
-      <span class="capture-info" id="capInfo">Ready</span>
+      <div class="tap-hint"><kbd>Space</kbd> = answer last · <kbd>Ctrl+Space</kbd> = toggle capture</div>
+    </div>
+    <div class="capbar">
+      <button class="btn-cap" id="capBtn" onclick="toggleCap()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        <span id="capTxt">Share Screen + Audio</span>
+      </button>
+      <div class="wv" id="wv"></div>
+      <span class="ci" id="ci">Ready</span>
     </div>
   </div>
 
-  <div class="col col-right">
-    <div class="col-head">
-      <div class="col-label"><span class="ind" style="background:var(--green)"></span> AI Answers</div>
-      <span class="col-meta" id="aCount">0 answers</span>
+  <div class="col">
+    <div class="ch">
+      <div class="cl"><span class="dot" style="background:var(--g)"></span> Answers</div>
+      <span class="cm" id="aCt">0 answers</span>
     </div>
-    <div class="col-body" id="rightBody">
-      <div class="empty" id="rightEmpty">
+    <div class="cb" id="rB">
+      <div class="empty" id="rE">
         <div class="empty-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div>
-        <h3>Answers show up here</h3>
-        <p>When we catch a question from the interviewer, you'll get a natural, conversational answer — personalized with your uploaded docs.</p>
+        <h3>Answers show here</h3>
+        <p>Auto-detected or tap the button on any speech block to get an answer.</p>
       </div>
     </div>
   </div>
@@ -390,528 +331,223 @@ body::after {
 <div class="toast" id="toast"></div>
 
 <script>
-// Set PDF.js worker
-if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+if(window.pdfjsLib)pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-// ===== STATE =====
-const S = {
-  key:'', model:'gpt-4o', type:'general', ctx:'',
-  capturing:false, mediaStream:null, mediaRecorder:null,
-  audioContext:null, analyser:null, chunks:[], sendInterval:null,
-  answerN:0, recentTranscript:'', processingQ:false, questionTimer:null,
-  // Knowledge base
-  kbFiles: [],    // [{name, size, type, status, content}]
-  kbText: '',     // combined text from all files
-};
+const S={key:'',model:'gpt-4o',type:'general',ctx:'',tone:'simple',
+  capturing:false,stream:null,rec:null,actx:null,analyser:null,chunks:[],intv:null,
+  aN:0,recent:'',procQ:false,qTimer:null,kbFiles:[],kbText:'',
+  timerStart:null,timerIntv:null,tBlocks:[]};
 
-// Init wave bars
-(function(){ const b=document.getElementById('waveBox'); for(let i=0;i<40;i++){const d=document.createElement('div');d.className='w';b.appendChild(d)} })();
+let tId=0;
 
-// ===== FILE UPLOAD & PARSING =====
-const uploadZone = document.getElementById('uploadZone');
-const fileInput = document.getElementById('fileInput');
+// Wave
+(()=>{const b=document.getElementById('wv');for(let i=0;i<45;i++){const d=document.createElement('div');d.className='w';b.appendChild(d)}})();
 
-uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
-uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
-uploadZone.addEventListener('drop', e => { e.preventDefault(); uploadZone.classList.remove('dragover'); handleFiles(e.dataTransfer.files); });
-fileInput.addEventListener('change', e => handleFiles(e.target.files));
+// Tone picker
+function pickTone(el){document.querySelectorAll('.tone-opt').forEach(o=>o.classList.remove('active'));el.classList.add('active');S.tone=el.dataset.tone}
 
-async function handleFiles(files){
-  for(const file of files){
-    // Prevent duplicates
-    if(S.kbFiles.find(f => f.name === file.name && f.size === file.size)) continue;
+// File upload
+const uz=document.getElementById('uz'),fIn=document.getElementById('fIn');
+uz.addEventListener('dragover',e=>{e.preventDefault();uz.classList.add('over')});
+uz.addEventListener('dragleave',()=>uz.classList.remove('over'));
+uz.addEventListener('drop',e=>{e.preventDefault();uz.classList.remove('over');handleF(e.dataTransfer.files)});
+fIn.addEventListener('change',e=>handleF(e.target.files));
 
-    const entry = { name: file.name, size: file.size, type: getFileType(file.name), status: 'parsing', content: '' };
-    S.kbFiles.push(entry);
-    renderFileList();
+async function handleF(files){for(const f of files){if(S.kbFiles.find(x=>x.name===f.name&&x.size===f.size))continue;const e={name:f.name,size:f.size,type:gType(f.name),status:'parsing',content:''};S.kbFiles.push(e);rFL();try{e.content=await parseF(f);e.status='ready'}catch(err){e.status='error'}rFL();rKB()}}
 
-    try {
-      entry.content = await parseFile(file);
-      entry.status = 'ready';
-    } catch(err){
-      console.error('Parse error:', err);
-      entry.status = 'error';
-      entry.content = '';
-    }
+function gType(n){const e=n.split('.').pop().toLowerCase();if(e==='pdf')return'pdf';if(['docx','doc'].includes(e))return'doc';if(['txt','md','rtf'].includes(e))return'txt';if(e==='csv')return'csv';return'other'}
 
-    renderFileList();
-    rebuildKB();
-  }
-}
+async function parseF(f){const x=f.name.split('.').pop().toLowerCase();if(x==='pdf'){const b=await f.arrayBuffer();const p=await pdfjsLib.getDocument({data:b}).promise;let t='';for(let i=1;i<=p.numPages;i++){const pg=await p.getPage(i);const c=await pg.getTextContent();t+=c.items.map(x=>x.str).join(' ')+'\n'}return t.trim()}if(x==='docx'||x==='doc'){const b=await f.arrayBuffer();return(await mammoth.extractRawText({arrayBuffer:b})).value.trim()}if(x==='json'){const t=await f.text();try{return JSON.stringify(JSON.parse(t),null,2)}catch(e){return t}}return await f.text()}
 
-function getFileType(name){
-  const ext = name.split('.').pop().toLowerCase();
-  if(ext === 'pdf') return 'pdf';
-  if(['docx','doc'].includes(ext)) return 'doc';
-  if(['txt','md','rtf'].includes(ext)) return 'txt';
-  if(ext === 'csv') return 'csv';
-  if(ext === 'json') return 'json';
-  return 'other';
-}
+function rFL(){const l=document.getElementById('flist');l.innerHTML='';S.kbFiles.forEach((f,i)=>{const c=document.createElement('div');c.className='fchip';const sc=f.status==='ready'?'ready':f.status==='error'?'error':'parsing';const st=f.status==='ready'?`✓ ${fSz(f.content.length)}ch`:f.status==='error'?'✗ Fail':'...';c.innerHTML=`<div class="fc-i ${f.type}">${f.type.toUpperCase()}</div><div class="fc-inf"><div class="fc-n">${esc(f.name)}</div><div class="fc-m">${fB(f.size)}</div></div><span class="fc-st ${sc}">${st}</span><button class="fc-x" onclick="rmF(${i})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>`;l.appendChild(c)})}
 
-async function parseFile(file){
-  const ext = file.name.split('.').pop().toLowerCase();
+function rmF(i){S.kbFiles.splice(i,1);rFL();rKB()}
 
-  // PDF
-  if(ext === 'pdf'){
-    const buf = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
-    let text = '';
-    for(let i = 1; i <= pdf.numPages; i++){
-      const page = await pdf.getPage(i);
-      const content = await page.getTextContent();
-      text += content.items.map(item => item.str).join(' ') + '\n';
-    }
-    return text.trim();
-  }
+function rKB(){const r=S.kbFiles.filter(f=>f.status==='ready');S.kbText=r.map(f=>`--- ${f.name} ---\n${f.content}`).join('\n\n');const s=document.getElementById('kbSum');s.innerHTML=r.length?`<span>${r.length}</span> file${r.length>1?'s':''} · <span>${fSz(S.kbText.length)}</span> chars`:'';uKBP()}
 
-  // DOCX
-  if(ext === 'docx' || ext === 'doc'){
-    const buf = await file.arrayBuffer();
-    const result = await mammoth.extractRawText({ arrayBuffer: buf });
-    return result.value.trim();
-  }
+function uKBP(){const p=document.getElementById('kbPill'),t=document.getElementById('kbTxt');const n=S.kbFiles.filter(f=>f.status==='ready').length;if(n){p.classList.add('kb-on');t.textContent=`${n} doc${n>1?'s':''}`}else{p.classList.remove('kb-on');t.textContent='No docs'}}
 
-  // JSON
-  if(ext === 'json'){
-    const text = await file.text();
-    try {
-      const obj = JSON.parse(text);
-      return JSON.stringify(obj, null, 2);
-    } catch(e){ return text; }
-  }
+function fB(b){return b<1024?b+' B':b<1048576?(b/1024).toFixed(1)+' KB':(b/1048576).toFixed(1)+' MB'}
+function fSz(c){return c<1000?''+c:c<1e6?(c/1000).toFixed(1)+'K':(c/1e6).toFixed(1)+'M'}
 
-  // TXT, MD, CSV, RTF, other text-based
-  return await file.text();
-}
-
-function renderFileList(){
-  const list = document.getElementById('fileList');
-  list.innerHTML = '';
-
-  S.kbFiles.forEach((f, idx) => {
-    const chip = document.createElement('div');
-    chip.className = 'file-chip';
-
-    const statusClass = f.status === 'ready' ? 'ready' : f.status === 'error' ? 'error' : 'parsing';
-    const statusText = f.status === 'ready' ? `✓ ${formatSize(f.content.length)} chars` : f.status === 'error' ? '✗ Failed' : 'Parsing...';
-
-    chip.innerHTML = `
-      <div class="fc-icon ${f.type}">${f.type.toUpperCase()}</div>
-      <div class="fc-info">
-        <div class="fc-name">${esc(f.name)}</div>
-        <div class="fc-meta">${formatBytes(f.size)}</div>
-      </div>
-      <span class="fc-status ${statusClass}">${statusText}</span>
-      <button class="fc-remove" onclick="removeFile(${idx})" title="Remove"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-    `;
-    list.appendChild(chip);
-  });
-}
-
-function removeFile(idx){
-  S.kbFiles.splice(idx, 1);
-  renderFileList();
-  rebuildKB();
-}
-
-function rebuildKB(){
-  const readyFiles = S.kbFiles.filter(f => f.status === 'ready');
-  const parts = readyFiles.map(f => `--- ${f.name} ---\n${f.content}`);
-  S.kbText = parts.join('\n\n');
-
-  const totalChars = S.kbText.length;
-  const summary = document.getElementById('kbSummary');
-
-  if(readyFiles.length > 0){
-    summary.innerHTML = `<span>${readyFiles.length}</span> file${readyFiles.length>1?'s':''} loaded · <span>${formatSize(totalChars)}</span> characters of context`;
-  } else {
-    summary.innerHTML = '';
-  }
-
-  updateKBPill();
-}
-
-function updateKBPill(){
-  const pill = document.getElementById('kbPill');
-  const text = document.getElementById('kbPillText');
-  const n = S.kbFiles.filter(f => f.status === 'ready').length;
-  if(n > 0){
-    pill.classList.add('loaded');
-    text.textContent = `${n} doc${n>1?'s':''}`;
-  } else {
-    pill.classList.remove('loaded');
-    text.textContent = 'No docs';
-  }
-}
-
-function formatBytes(bytes){
-  if(bytes < 1024) return bytes + ' B';
-  if(bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
-  return (bytes/(1024*1024)).toFixed(1) + ' MB';
-}
-
-function formatSize(chars){
-  if(chars < 1000) return chars.toString();
-  if(chars < 1000000) return (chars/1000).toFixed(1) + 'K';
-  return (chars/1000000).toFixed(1) + 'M';
-}
-
-// ===== SETUP =====
-function openSetup(){ document.getElementById('setupScreen').classList.remove('gone'); }
-
+// Setup
+function openSetup(){document.getElementById('setup').classList.remove('gone')}
 function launch(){
-  const k = document.getElementById('inKey').value.trim();
-  if(!k){ toast('Enter your OpenAI API key','err'); return; }
-  if(!k.startsWith('sk-')){ toast('Key should start with sk-','err'); return; }
-
-  S.key = k;
-  S.model = document.getElementById('inModel').value;
-  S.type = document.getElementById('inType').value;
-  S.ctx = document.getElementById('inContext').value.trim();
-
-  document.getElementById('modelTag').textContent = `Whisper + ${S.model.toUpperCase()}`;
-  document.getElementById('setupScreen').classList.add('gone');
-  setStatus('ready');
-
-  const docCount = S.kbFiles.filter(f => f.status === 'ready').length;
-  if(docCount > 0){
-    toast(`Ready with ${docCount} doc${docCount>1?'s':''} loaded! Share your screen to begin.`,'ok');
-  } else {
-    toast('Ready! Share your screen + audio to begin.','ok');
-  }
+  const k=document.getElementById('inKey').value.trim();
+  if(!k){toast('Enter API key','err');return}if(!k.startsWith('sk-')){toast('Key starts with sk-','err');return}
+  S.key=k;S.model=document.getElementById('inModel').value;S.type=document.getElementById('inType').value;S.ctx=document.getElementById('inCtx').value.trim();
+  document.getElementById('mTag').textContent=`Whisper + ${S.model.toUpperCase()}`;
+  document.getElementById('setup').classList.add('gone');setStatus('ready');
+  toast('Ready! Share screen to start.','ok');
 }
 
-// ===== SCREEN + AUDIO CAPTURE =====
-async function toggleCapture(){
-  if(!S.key){ toast('Set up your API key first','err'); openSetup(); return; }
-  if(S.capturing) return stopCapture();
-
-  try {
-    const displayStream = await navigator.mediaDevices.getDisplayMedia({
-      video: true,
-      audio: { echoCancellation:false, noiseSuppression:false, autoGainControl:false, sampleRate:16000 }
-    });
-
-    const audioTracks = displayStream.getAudioTracks();
-    if(audioTracks.length === 0){
-      displayStream.getTracks().forEach(t => t.stop());
-      toast('No system audio! Check "Share system audio" in the dialog.','err');
-      return;
-    }
-
-    S.mediaStream = displayStream;
-
-    S.audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate:16000 });
-    const source = S.audioContext.createMediaStreamSource(new MediaStream(audioTracks));
-    S.analyser = S.audioContext.createAnalyser();
-    S.analyser.fftSize = 128;
-    source.connect(S.analyser);
-
-    startRecorder(audioTracks);
-
-    displayStream.getVideoTracks()[0]?.addEventListener('ended', () => stopCapture());
-    audioTracks[0]?.addEventListener('ended', () => stopCapture());
-
-    S.capturing = true;
-
-    S.sendInterval = setInterval(() => {
-      if(S.mediaRecorder && S.mediaRecorder.state === 'recording') S.mediaRecorder.stop();
-    }, 5000);
-
-    document.getElementById('captureBtn').classList.add('capturing');
-    document.getElementById('capBtnTxt').textContent = 'Stop Capture';
-    document.getElementById('waveBox').classList.add('active');
-    document.getElementById('recInd').classList.add('on');
-    document.getElementById('leftEmpty').style.display = 'none';
-    setStatus('live');
-    animateWave();
-
-  } catch(err){
-    console.error(err);
-    if(err.name === 'NotAllowedError') toast('Screen share cancelled','err');
-    else toast('Capture error: ' + err.message,'err');
-  }
+// Capture
+async function toggleCap(){
+  if(!S.key){toast('Set up API key','err');openSetup();return}
+  if(S.capturing)return stopCap();
+  try{
+    const ds=await navigator.mediaDevices.getDisplayMedia({video:true,audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false,sampleRate:16000}});
+    const at=ds.getAudioTracks();if(!at.length){ds.getTracks().forEach(t=>t.stop());toast('No system audio! Check "Share system audio".','err');return}
+    S.stream=ds;S.actx=new(window.AudioContext||window.webkitAudioContext)({sampleRate:16000});const src=S.actx.createMediaStreamSource(new MediaStream(at));S.analyser=S.actx.createAnalyser();S.analyser.fftSize=128;src.connect(S.analyser);
+    startRec(at);ds.getVideoTracks()[0]?.addEventListener('ended',()=>stopCap());at[0]?.addEventListener('ended',()=>stopCap());
+    S.capturing=true;S.intv=setInterval(()=>{if(S.rec&&S.rec.state==='recording')S.rec.stop()},5000);
+    document.getElementById('capBtn').classList.add('on');document.getElementById('capTxt').textContent='Stop';
+    document.getElementById('wv').classList.add('active');document.getElementById('rInd').classList.add('on');
+    document.getElementById('lE').style.display='none';document.getElementById('tapF').classList.add('show');
+    setStatus('live');animW();startTmr();
+  }catch(e){if(e.name==='NotAllowedError')toast('Cancelled','err');else toast(e.message,'err')}
 }
+function stopCap(){S.capturing=false;clearInterval(S.intv);if(S.rec&&S.rec.state!=='inactive')S.rec.stop();if(S.stream){S.stream.getTracks().forEach(t=>t.stop());S.stream=null}if(S.actx){S.actx.close();S.actx=null;S.analyser=null}document.getElementById('capBtn').classList.remove('on');document.getElementById('capTxt').textContent='Share Screen + Audio';document.getElementById('wv').classList.remove('active');document.getElementById('rInd').classList.remove('on');document.getElementById('ci').textContent='Stopped';document.getElementById('ci').className='ci';setStatus('ready');stopTmr()}
 
-function stopCapture(){
-  S.capturing = false;
-  clearInterval(S.sendInterval);
-  if(S.mediaRecorder && S.mediaRecorder.state !== 'inactive') S.mediaRecorder.stop();
-  if(S.mediaStream){ S.mediaStream.getTracks().forEach(t => t.stop()); S.mediaStream = null; }
-  if(S.audioContext){ S.audioContext.close(); S.audioContext = null; S.analyser = null; }
+function startRec(at){const s=new MediaStream(at);let m='audio/webm;codecs=opus';if(!MediaRecorder.isTypeSupported(m))m='audio/webm';if(!MediaRecorder.isTypeSupported(m))m='';S.rec=new MediaRecorder(s,m?{mimeType:m}:{});S.chunks=[];S.rec.ondataavailable=e=>{if(e.data.size>0)S.chunks.push(e.data)};S.rec.onstop=()=>procChunks();S.rec.start()}
+function restartRec(){if(!S.capturing||!S.stream)return;const at=S.stream.getAudioTracks();if(at.length)startRec(at)}
 
-  document.getElementById('captureBtn').classList.remove('capturing');
-  document.getElementById('capBtnTxt').textContent = 'Share Screen + Audio';
-  document.getElementById('waveBox').classList.remove('active');
-  document.getElementById('recInd').classList.remove('on');
-  document.getElementById('capInfo').textContent = 'Stopped';
-  document.getElementById('capInfo').className = 'capture-info';
-  setStatus('ready');
-}
+// Whisper
+async function procChunks(){if(!S.chunks.length){if(S.capturing)restartRec();return}const blob=new Blob(S.chunks,{type:S.rec?.mimeType||'audio/webm'});S.chunks=[];if(S.capturing)restartRec();if(blob.size<5000)return;
+  document.getElementById('ci').textContent='Transcribing...';document.getElementById('ci').className='ci busy';
+  try{const fd=new FormData();fd.append('file',blob,'audio.webm');fd.append('model','whisper-1');fd.append('language','en');fd.append('response_format','text');
+    const r=await fetch('https://api.openai.com/v1/audio/transcriptions',{method:'POST',headers:{'Authorization':`Bearer ${S.key}`},body:fd});
+    if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error?.message||`HTTP ${r.status}`)}
+    let txt=(await r.text()).trim();if(txt&&txt.length>2&&!isJunk(txt)){addT(txt);S.recent+=' '+txt;if(!S.procQ){clearTimeout(S.qTimer);S.qTimer=setTimeout(()=>detectQ(),1500)}}
+    document.getElementById('ci').textContent=S.capturing?'Listening...':'Stopped';document.getElementById('ci').className=S.capturing?'ci on':'ci';
+  }catch(e){document.getElementById('ci').textContent='Listening...';document.getElementById('ci').className='ci on'}}
 
-function startRecorder(audioTracks){
-  const stream = new MediaStream(audioTracks);
-  let mime = 'audio/webm;codecs=opus';
-  if(!MediaRecorder.isTypeSupported(mime)) mime = 'audio/webm';
-  if(!MediaRecorder.isTypeSupported(mime)) mime = '';
+function isJunk(t){const j=['you','thank you','thanks','bye','okay','um','uh','hmm','yeah','yes','no','so','[silence]','[music]','[blank_audio]','...','thank you for watching'];return j.includes(t.toLowerCase().replace(/[^a-z ]/g,'').trim())||t.trim().length<3}
 
-  S.mediaRecorder = new MediaRecorder(stream, mime ? { mimeType:mime } : {});
-  S.chunks = [];
-  S.mediaRecorder.ondataavailable = e => { if(e.data.size > 0) S.chunks.push(e.data); };
-  S.mediaRecorder.onstop = () => processChunks();
-  S.mediaRecorder.start();
-}
+// Question detection
+async function detectQ(){const txt=S.recent.trim();if(!txt||txt.length<15){S.recent='';return}S.recent='';S.procQ=true;
+  try{const dr=await gpt([{role:'system',content:'Find interview questions in this transcript. Reply ONLY JSON: {"found":true/false,"question":"the question"}. No markdown.'},{role:'user',content:`"${txt}"`}],200);
+    let p;try{p=JSON.parse(dr.replace(/```json|```/g,'').trim())}catch(e){if(txt.includes('?'))p={found:true,question:txt};else{S.procQ=false;return}}
+    if(!p.found){S.procQ=false;return}const q=p.question||txt;showQ(q);showDots();
+    const t0=performance.now();const ans=await gpt(buildAns(q),800);const ms=Math.round(performance.now()-t0);
+    rmDots();showA(q,ans,false,ms);S.aN++;document.getElementById('aCt').textContent=`${S.aN} ans`;
+  }catch(e){rmDots();toast('Error: '+e.message,'err')}S.procQ=false}
 
-function restartRecorder(){
-  if(!S.capturing || !S.mediaStream) return;
-  const at = S.mediaStream.getAudioTracks();
-  if(!at.length) return;
-  startRecorder(at);
-}
+// Manual tap
+function manualTap(){const last=S.tBlocks[S.tBlocks.length-1];if(!last){toast('No speech yet','err');return}forceAns(last.text,last.id)}
+function forceFromBlock(id){const b=S.tBlocks.find(x=>x.id===id);if(b)forceAns(b.text,id)}
 
-// ===== WHISPER =====
-async function processChunks(){
-  if(!S.chunks.length){ if(S.capturing) restartRecorder(); return; }
+async function forceAns(text,bid){if(S.procQ){toast('Wait, already working...','err');return}
+  const mb=document.querySelector(`[data-tid="${bid}"]`);if(mb){mb.classList.add('sent');mb.innerHTML='✓ Sent'}
+  document.getElementById('tapBtn').classList.add('loading');document.getElementById('tapTxt').textContent='Working...';
+  S.procQ=true;
+  try{const dr=await gpt([{role:'system',content:'Find the question in this speech. If no clear question, guess what interviewer wants to know. Reply ONLY JSON: {"question":"the question"}'},{role:'user',content:`"${text}"`}],200);
+    let q=text;try{const p=JSON.parse(dr.replace(/```json|```/g,'').trim());if(p.question)q=p.question}catch(e){}
+    showQ(q);showDots();const t0=performance.now();const ans=await gpt(buildAns(q),800);const ms=Math.round(performance.now()-t0);
+    rmDots();showA(q,ans,true,ms);S.aN++;document.getElementById('aCt').textContent=`${S.aN} ans`;
+  }catch(e){rmDots();toast('Error: '+e.message,'err')}
+  S.procQ=false;document.getElementById('tapBtn').classList.remove('loading');document.getElementById('tapTxt').textContent='⚡ Tap to Answer'}
 
-  const blob = new Blob(S.chunks, { type: S.mediaRecorder?.mimeType || 'audio/webm' });
-  S.chunks = [];
-  if(S.capturing) restartRecorder();
-  if(blob.size < 5000) return;
+// GPT
+async function gpt(msgs,mt){const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${S.key}`},body:JSON.stringify({model:S.model,messages:msgs,max_tokens:mt,temperature:0.7})});if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error?.message||`HTTP ${r.status}`)}return(await r.json()).choices[0].message.content}
 
-  document.getElementById('capInfo').textContent = 'Transcribing...';
-  document.getElementById('capInfo').className = 'capture-info busy';
+// ===== THE KEY PART: ANSWER PROMPTS =====
+function buildAns(q){
+  const kb=S.kbText.length>0?`\n\nCANDIDATE DOCS:\n${S.kbText.length>12000?S.kbText.substring(0,12000)+'...':S.kbText}`:'';
+  const bg=S.ctx?`\nCandidate info: ${S.ctx}`:'';
 
-  try {
-    const fd = new FormData();
-    fd.append('file', blob, 'audio.webm');
-    fd.append('model', 'whisper-1');
-    fd.append('language', 'en');
-    fd.append('response_format', 'text');
+  const typeHint={general:'',technical:'Include code concepts if needed. Keep it clear.',behavioral:'Use a short real example. Say what you did and what happened.',
+    'system-design':'Name the main parts. Say how they connect. Keep it short.',product:'Say who the user is, what they need, how to measure success.',consulting:'Break the problem into 2-3 parts. Give numbers if you can.'};
 
-    const r = await fetch('https://api.openai.com/v1/audio/transcriptions', {
-      method:'POST', headers:{'Authorization':`Bearer ${S.key}`}, body:fd
-    });
+  const toneRules={
+    simple:`ANSWER RULES — THIS IS THE MOST IMPORTANT PART:
+- Use VERY SIMPLE English. Like you are explaining to a regular person, not a professor.
+- Use small common words. NO big words. NO fancy words.
+- NO filler phrases. NO "Here's the thing", NO "So basically", NO "Honestly", NO "The way I see it", NO "At the end of the day"
+- Just give the answer. Start with the answer directly.
+- Keep it 40 to 80 words MAX. Short and clear.
+- Use "I" and "my" and "we"
+- Give ONE real example or number
+- NO bullet points. NO markdown. Just plain sentences.
+- End with one strong sentence. Stop. Don't add extra.
+- Talk like a normal person in a normal conversation
+- Example good answer: "I built a payment system at my last job. It handled 10,000 transactions per day. I used React for the front end and Node for the back end. The main challenge was making it fast, so I added caching. It cut load time by 60%. I can do the same kind of work here."`,
 
-    if(!r.ok){ const e = await r.json().catch(()=>({})); throw new Error(e.error?.message || `HTTP ${r.status}`); }
+    pro:`ANSWER RULES:
+- Professional but clear. No complex vocabulary.
+- 60 to 100 words.
+- NO filler phrases. Start with the answer.
+- Use "I" and first person.
+- Include one specific example with a number or result.
+- NO bullet points. NO markdown. Plain text only.
+- Sound confident and prepared.`,
 
-    let text = (await r.text()).trim();
-
-    if(text && text.length > 2 && !isJunk(text)){
-      addTranscript(text);
-      S.recentTranscript += ' ' + text;
-
-      if(!S.processingQ){
-        clearTimeout(S.questionTimer);
-        S.questionTimer = setTimeout(() => detectQuestion(), 1200);
-      }
-    }
-
-    document.getElementById('capInfo').textContent = S.capturing ? 'Listening...' : 'Stopped';
-    document.getElementById('capInfo').className = S.capturing ? 'capture-info on' : 'capture-info';
-
-  } catch(err){
-    console.error('Whisper:', err);
-    document.getElementById('capInfo').textContent = 'Listening...';
-    document.getElementById('capInfo').className = 'capture-info on';
-  }
-}
-
-function isJunk(t){
-  const j = ['you','thank you','thanks','bye','okay','um','uh','hmm','huh','yeah','yes','no','so','the','and','','[silence]','[music]','[blank_audio]','...','thank you for watching','please subscribe'];
-  const l = t.toLowerCase().replace(/[^a-z ]/g,'').trim();
-  return j.includes(l) || l.length < 3;
-}
-
-// ===== QUESTION DETECTION + ANSWER =====
-async function detectQuestion(){
-  const text = S.recentTranscript.trim();
-  if(!text || text.length < 15){ S.recentTranscript = ''; return; }
-
-  S.recentTranscript = '';
-  S.processingQ = true;
-
-  try {
-    const dResp = await callGPT([
-      { role:'system', content:'You detect interview questions from transcribed audio. Given a transcript chunk, determine if it contains an interview question asked by the interviewer. Reply ONLY in JSON (no markdown): {"found":true/false,"question":"the clean question"}. Pick the most important question if multiple exist.' },
-      { role:'user', content:`Transcript: "${text}"` }
-    ], 200);
-
-    let parsed;
-    try { parsed = JSON.parse(dResp.replace(/```json|```/g,'').trim()); }
-    catch(e){ if(text.includes('?')) parsed = { found:true, question:text }; else { S.processingQ = false; return; } }
-
-    if(!parsed.found){ S.processingQ = false; return; }
-
-    const question = parsed.question || text;
-    showQuestionCard(question);
-
-    showTyping();
-    const answer = await callGPT(buildAnswerMessages(question), 1200);
-    removeTyping();
-    showAnswerCard(question, answer);
-
-    S.answerN++;
-    document.getElementById('aCount').textContent = `${S.answerN} answer${S.answerN !== 1 ? 's' : ''}`;
-
-  } catch(err){
-    removeTyping();
-    console.error('GPT:', err);
-    toast('API error: ' + err.message, 'err');
-  }
-
-  S.processingQ = false;
-}
-
-async function callGPT(messages, maxTokens){
-  const r = await fetch('https://api.openai.com/v1/chat/completions', {
-    method:'POST',
-    headers:{'Content-Type':'application/json','Authorization':`Bearer ${S.key}`},
-    body:JSON.stringify({ model:S.model, messages, max_tokens:maxTokens, temperature:0.8 }),
-  });
-  if(!r.ok){ const e = await r.json().catch(()=>({})); throw new Error(e.error?.message || `HTTP ${r.status}`); }
-  const d = await r.json();
-  return d.choices[0].message.content;
-}
-
-function buildAnswerMessages(question){
-  const guides = {
-    general: 'Give answers like a confident, friendly human — not a textbook.',
-    technical: "Explain technical stuff clearly but like you're talking to a smart colleague, not reading docs.",
-    behavioral: "Use STAR format but make it sound like you're naturally telling a story, not filling a template.",
-    'system-design': "Walk through the design like you're whiteboarding with a friend — casual but smart.",
-    product: "Think like a sharp PM — be structured but conversational, not robotic.",
-    consulting: "Break down the case logically but talk like a human, not a McKinsey slide.",
+    friendly:`ANSWER RULES:
+- Warm and simple. Like talking to a nice coworker.
+- 50 to 90 words.
+- NO "Here's the thing" or "So basically" or similar fillers.
+- Start directly with your answer.
+- Use simple everyday words.
+- Include one real example.
+- NO bullet points. NO markdown. Plain sentences.
+- Be positive but not fake.`
   };
 
-  const guide = guides[S.type] || guides.general;
-  let bgNote = S.ctx ? `\n\nCandidate background: ${S.ctx}` : '';
+  const tone=toneRules[S.tone]||toneRules.simple;
+  const typeNote=typeHint[S.type]||'';
 
-  // INJECT KNOWLEDGE BASE
-  let kbBlock = '';
-  if(S.kbText.length > 0){
-    // Truncate to ~12000 chars to stay within context limits
-    const truncated = S.kbText.length > 12000 ? S.kbText.substring(0, 12000) + '\n...[truncated]' : S.kbText;
-    kbBlock = `\n\n=== CANDIDATE'S UPLOADED DOCUMENTS (use these to personalize your answer) ===\n${truncated}\n=== END OF DOCUMENTS ===`;
-  }
+  return [{role:'system',content:`You are helping someone answer an interview question. ${typeNote}${bg}${kb}
 
-  return [
-    { role:'system', content:`You are a brilliant interview coach who gives answers the way a real, confident human would actually say them out loud. ${guide}${bgNote}${kbBlock}
+${tone}
 
-CRITICAL RULES:
-- Sound like a real person talking, NOT like ChatGPT or a textbook
-- Use casual connectors like "So basically...", "The way I see it...", "Honestly...", "Here's the thing..."
-- Keep it concise — 100 to 200 words max. Interviewers hate long rambling answers
-- Use first person ("I", "my experience")
-- No bullet points or markdown formatting — just natural flowing speech
-- If the uploaded documents contain relevant info (resume, job description, company details), USE that info to make the answer specific and personal
-- Reference actual projects, companies, skills, metrics from the docs when applicable
-- Include one specific example or number if possible
-- End strong — don't trail off
-- NO phrases like "Great question!", "That's a fantastic question", "I'm glad you asked"
-- NO corporate buzzwords like "leverage", "synergy", "streamline"
-- Sound confident but not arrogant` },
-    { role:'user', content:`The interviewer just asked: "${question}"\n\nGive me a killer answer I can say naturally. ${S.kbText.length > 0 ? 'Use my uploaded docs to make it personal and specific.' : ''}` }
-  ];
+BANNED PHRASES (never use these):
+- "Great question"
+- "That's a great question"
+- "I'm glad you asked"
+- "Here's the thing"
+- "So basically"
+- "Honestly"
+- "The way I see it"
+- "At the end of the day"
+- "In terms of"
+- "leverage"
+- "synergy"
+- "streamline"
+- "utilize"
+- "facilitate"
+- "paradigm"
+- "holistic"
+- "robust"
+
+If candidate docs are provided, use real details from them — project names, numbers, company names, skills.`},
+  {role:'user',content:`Question: "${q}"\n\nGive a short, simple, direct answer.${S.kbText.length>0?' Use my docs for real details.':''}`}];
 }
 
-// ===== UI HELPERS =====
-function addTranscript(text){
-  const now = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  const el = document.createElement('div');
-  el.className = 't-item';
-  el.innerHTML = `<div class="t-meta"><span>Captured</span><span class="ts">${now}</span></div><div class="t-block">${esc(text)}</div>`;
-  document.getElementById('leftBody').appendChild(el);
-  scrollBot('leftBody');
-}
+// UI
+function addT(text){const id=++tId;const now=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const el=document.createElement('div');el.className='t-item';
+  el.innerHTML=`<div class="t-meta"><span>Captured</span><span class="ts">${now}</span></div><div class="t-blk">${esc(text)}</div><button class="mini-tap" data-tid="${id}" onclick="forceFromBlock(${id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5"/></svg> Tap to Answer</button>`;
+  document.getElementById('lB').appendChild(el);S.tBlocks.push({id,text});scrollBot('lB')}
 
-function showQuestionCard(q){
-  const el = document.createElement('div');
-  el.className = 'q-card';
-  el.innerHTML = `<div class="q-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Question Detected</div><div class="q-body">${esc(q)}</div>`;
-  document.getElementById('leftBody').appendChild(el);
-  scrollBot('leftBody');
-}
+function showQ(q){const el=document.createElement('div');el.className='q-card';el.innerHTML=`<div class="qt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Question Found</div><div class="qb">${esc(q)}</div>`;document.getElementById('lB').appendChild(el);scrollBot('lB')}
 
-function showTyping(){
-  document.getElementById('rightEmpty')?.remove();
-  const el = document.createElement('div');
-  el.className = 'a-card'; el.id = 'typingCard';
-  el.innerHTML = `<div class="a-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h.01M12 12h.01M16 12h.01"/></svg> Thinking...</div><div class="dots"><span></span><span></span><span></span></div>`;
-  document.getElementById('rightBody').appendChild(el);
-  scrollBot('rightBody');
-}
+function showDots(){document.getElementById('rE')?.remove();const el=document.createElement('div');el.className='a-card';el.id='typC';el.innerHTML=`<div class="a-bdg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h.01M12 12h.01M16 12h.01"/></svg> Thinking...</div><div class="dots"><span></span><span></span><span></span></div>`;document.getElementById('rB').appendChild(el);scrollBot('rB')}
+function rmDots(){document.getElementById('typC')?.remove()}
 
-function removeTyping(){ document.getElementById('typingCard')?.remove(); }
+function showA(q,ans,manual,ms){const el=document.createElement('div');el.className='a-card';const h=ans.replace(/\n\n/g,'</p><p>').replace(/\n/g,'<br>');const hasKB=S.kbText.length>0;
+  el.innerHTML=`<div class="a-top"><div class="a-badges"><div class="a-bdg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Answer</div>${manual?'<span class="small-tag tag-tap">Tapped</span>':''}${hasKB?'<span class="small-tag tag-kb">Docs</span>':''}<span class="small-tag tag-speed">${(ms/1000).toFixed(1)}s</span></div><div class="a-acts"><button class="a-btn" onclick="copyA(this)" title="Copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button><button class="a-btn" onclick="speakA(this)" title="Read aloud"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 010 7.07"/></svg></button></div></div><div class="a-q">"${esc(q)}"</div><div class="a-body"><p>${h}</p></div>`;
+  el.dataset.raw=ans;document.getElementById('rB').appendChild(el);scrollBot('rB')}
 
-function showAnswerCard(question, answer){
-  const el = document.createElement('div');
-  el.className = 'a-card';
-  const htmlAnswer = answer.replace(/\n\n/g,'</p><p>').replace(/\n/g,'<br>');
-  const hasKB = S.kbText.length > 0;
+function copyA(b){navigator.clipboard.writeText(b.closest('.a-card').dataset.raw).then(()=>toast('Copied!','ok')).catch(()=>toast('Failed','err'))}
+function speakA(b){if('speechSynthesis' in window){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(b.closest('.a-card').dataset.raw);u.rate=1;speechSynthesis.speak(u)}}
 
-  el.innerHTML = `
-    <div class="a-top">
-      <div class="a-badges">
-        <div class="a-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Answer Ready</div>
-        ${hasKB ? '<span class="kb-used-tag">📄 Docs Used</span>' : ''}
-      </div>
-      <button class="a-copy" onclick="copyA(this)" title="Copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>
-    </div>
-    <div class="a-question">"${esc(question)}"</div>
-    <div class="a-body"><p>${htmlAnswer}</p></div>
-  `;
-  el.dataset.raw = answer;
-  document.getElementById('rightBody').appendChild(el);
-  scrollBot('rightBody');
-}
+function clearLeft(){document.getElementById('lB').innerHTML='';S.recent='';S.tBlocks=[];document.getElementById('tapF').classList.remove('show')}
 
-function copyA(btn){
-  const raw = btn.closest('.a-card').dataset.raw;
-  navigator.clipboard.writeText(raw).then(() => toast('Copied!','ok')).catch(() => toast('Copy failed','err'));
-}
+// Wave
+function animW(){const bars=document.querySelectorAll('.wv .w');const bl=S.analyser?S.analyser.frequencyBinCount:0;const data=new Uint8Array(bl);(function t(){if(!S.capturing)return;if(S.analyser){S.analyser.getByteFrequencyData(data);bars.forEach((b,i)=>{const v=data[Math.floor(i/bars.length*bl)]||0;b.style.height=Math.max(3,(v/255)*28)+'px';b.style.opacity=0.35+(v/255)*0.65})}requestAnimationFrame(t)})()}
 
-// ===== WAVE VIZ =====
-function animateWave(){
-  const bars = document.querySelectorAll('.wave-display .w');
-  const bufLen = S.analyser ? S.analyser.frequencyBinCount : 0;
-  const data = new Uint8Array(bufLen);
+// Timer
+function startTmr(){S.timerStart=Date.now();S.timerIntv=setInterval(()=>{const d=Math.floor((Date.now()-S.timerStart)/1000);document.getElementById('timer').textContent=String(Math.floor(d/60)).padStart(2,'0')+':'+String(d%60).padStart(2,'0')},1000)}
+function stopTmr(){clearInterval(S.timerIntv)}
 
-  function tick(){
-    if(!S.capturing) return;
-    if(S.analyser){
-      S.analyser.getByteFrequencyData(data);
-      bars.forEach((b,i) => {
-        const idx = Math.floor(i / bars.length * bufLen);
-        const val = data[idx] || 0;
-        b.style.height = Math.max(4, (val/255)*34) + 'px';
-        b.style.opacity = 0.4 + (val/255)*0.6;
-      });
-    }
-    requestAnimationFrame(tick);
-  }
-  tick();
-}
+function setStatus(s){const p=document.getElementById('sPill'),l=document.getElementById('sLbl');p.classList.remove('live');if(s==='live'){p.classList.add('live');l.textContent='Live'}else l.textContent=s==='ready'?'Ready':'Offline'}
 
-// ===== UTILITY =====
-function esc(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
-function scrollBot(id){ const el=document.getElementById(id); setTimeout(()=>el.scrollTop=el.scrollHeight,60); }
+// Keys
+document.addEventListener('keydown',e=>{if(e.code==='Space'&&!e.ctrlKey&&!e.metaKey&&!e.altKey){const t=document.activeElement.tagName;if(t==='INPUT'||t==='TEXTAREA'||t==='SELECT')return;if(S.capturing&&S.tBlocks.length){e.preventDefault();manualTap()}}if(e.code==='Space'&&(e.ctrlKey||e.metaKey)){e.preventDefault();toggleCap()}});
 
-function setStatus(s){
-  const pill=document.getElementById('statusPill'), label=document.getElementById('statusLabel');
-  pill.classList.remove('live');
-  if(s==='live'){ pill.classList.add('live'); label.textContent='Capturing'; }
-  else if(s==='ready') label.textContent='Ready';
-  else label.textContent='Offline';
-}
-
-function clearLeft(){ document.getElementById('leftBody').innerHTML=''; S.recentTranscript=''; }
-
-function toast(msg, type=''){
-  const t=document.getElementById('toast');
-  t.textContent=msg; t.className=`toast ${type} show`;
-  setTimeout(()=>t.classList.remove('show'),3500);
-}
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+function scrollBot(id){const el=document.getElementById(id);setTimeout(()=>el.scrollTop=el.scrollHeight,50)}
+function toast(m,t=''){const e=document.getElementById('toast');e.textContent=m;e.className=`toast ${t} show`;setTimeout(()=>e.classList.remove('show'),3500)}
 </script>
 </body>
 </html>
