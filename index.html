@@ -1,0 +1,1277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GhostHire — Real-Time Interview Copilot</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Fraunces:opsz,wght@9..144,700;9..144,800;9..144,900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============ DESIGN TOKENS ============ */
+:root {
+  --bg-base: #08090c;
+  --bg-surface: #0e1015;
+  --bg-raised: #14161d;
+  --bg-overlay: #1a1c25;
+  --bg-hover: #1f2230;
+  --border-subtle: rgba(255,255,255,0.05);
+  --border-focus: rgba(16,185,129,0.45);
+  --text-primary: #eaedf3;
+  --text-secondary: #7c8097;
+  --text-ghost: #454860;
+  --green-main: #10b981;
+  --green-dim: rgba(16,185,129,0.15);
+  --green-glow: rgba(16,185,129,0.3);
+  --red-main: #f43f5e;
+  --red-dim: rgba(244,63,94,0.12);
+  --amber-main: #f59e0b;
+  --amber-dim: rgba(245,158,11,0.1);
+  --blue-main: #3b82f6;
+  --blue-dim: rgba(59,130,246,0.1);
+  --gradient-brand: linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%);
+  --gradient-glass: linear-gradient(135deg, rgba(16,185,129,0.06) 0%, rgba(5,150,105,0.02) 100%);
+  --font-body: 'Outfit', sans-serif;
+  --font-display: 'Fraunces', serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+  --radius-s: 8px;
+  --radius-m: 12px;
+  --radius-l: 18px;
+  --radius-xl: 24px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg-base);
+  color: var(--text-primary);
+  overflow: hidden;
+  background-image:
+    radial-gradient(ellipse at 15% 80%, rgba(16,185,129,0.04) 0%, transparent 50%),
+    radial-gradient(ellipse at 85% 15%, rgba(5,150,105,0.03) 0%, transparent 45%);
+}
+
+/* subtle grain */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.025;
+  background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='f'%3E%3CfeTurbulence baseFrequency='0.85' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
+}
+
+::selection { background: var(--green-dim); color: var(--green-main); }
+
+/* ============ SCROLLBAR ============ */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-subtle); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.1); }
+
+/* ============ TOP BAR ============ */
+.topbar {
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: rgba(8,9,12,0.85);
+  backdrop-filter: blur(16px);
+  position: relative;
+  z-index: 50;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-mark {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--gradient-brand);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 0 20px var(--green-dim);
+}
+
+.brand-mark svg { width: 15px; height: 15px; }
+
+.brand-name {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 17px;
+  letter-spacing: -0.3px;
+  color: var(--green-main);
+}
+
+.brand-tag {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-ghost);
+  background: var(--bg-raised);
+  border: 1px solid var(--border-subtle);
+  padding: 2px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  font-family: var(--font-mono);
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.status-pill {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-raised);
+  color: var(--text-ghost);
+  transition: all 0.4s;
+}
+
+.status-pill .pip {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text-ghost);
+  transition: all 0.4s;
+}
+
+.status-pill.live {
+  border-color: rgba(16,185,129,0.25);
+  color: var(--green-main);
+  background: var(--green-dim);
+}
+
+.status-pill.live .pip {
+  background: var(--green-main);
+  box-shadow: 0 0 10px var(--green-glow);
+  animation: blink 1.8s infinite;
+}
+
+@keyframes blink {
+  0%,100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.btn-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-s);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-raised);
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: all 0.2s;
+}
+.btn-icon:hover { border-color: var(--green-main); color: var(--green-main); }
+.btn-icon svg { width: 16px; height: 16px; }
+
+/* ============ SETUP SCREEN ============ */
+.setup-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  background: rgba(8,9,12,0.95);
+  backdrop-filter: blur(24px);
+}
+
+.setup-screen.gone {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s;
+}
+
+.setup-box {
+  width: 480px;
+  max-width: 92vw;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  padding: 44px 40px;
+  box-shadow: 0 40px 100px rgba(0,0,0,0.6);
+  animation: rise 0.55s cubic-bezier(0.16,1,0.3,1);
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(24px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+
+.setup-box h1 {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 900;
+  margin-bottom: 6px;
+  background: var(--gradient-brand);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.setup-box .subtitle {
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  line-height: 1.65;
+  margin-bottom: 30px;
+}
+
+.field { margin-bottom: 18px; }
+
+.field label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.9px;
+  margin-bottom: 7px;
+}
+
+.field input, .field select, .field textarea {
+  width: 100%;
+  background: var(--bg-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-m);
+  padding: 13px 15px;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.field input:focus, .field select:focus, .field textarea:focus {
+  border-color: var(--green-main);
+  box-shadow: 0 0 0 3px var(--green-dim);
+}
+
+.field textarea {
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  min-height: 70px;
+  resize: vertical;
+}
+
+.field select {
+  appearance: none;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6' fill='%237c8097'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+}
+
+.field select option { background: var(--bg-surface); }
+
+.row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.btn-go {
+  width: 100%;
+  margin-top: 8px;
+  padding: 15px;
+  border: none;
+  border-radius: var(--radius-m);
+  background: var(--gradient-brand);
+  color: white;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.2px;
+  transition: transform 0.12s, box-shadow 0.3s;
+  box-shadow: 0 0 30px var(--green-dim);
+}
+
+.btn-go:hover { transform: translateY(-1px); box-shadow: 0 0 50px var(--green-glow); }
+.btn-go:active { transform: translateY(0); }
+
+.lock-note {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 14px;
+  font-size: 10.5px;
+  color: var(--text-ghost);
+}
+
+.lock-note svg { width: 13px; height: 13px; flex-shrink: 0; }
+
+/* ============ MAIN LAYOUT ============ */
+.app {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  height: calc(100vh - 52px);
+}
+
+.col { display: flex; flex-direction: column; overflow: hidden; }
+.col-left { border-right: 1px solid var(--border-subtle); }
+
+.col-head {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+  background: var(--bg-surface);
+}
+
+.col-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  color: var(--text-secondary);
+}
+
+.col-label .ind {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--text-ghost);
+  transition: all 0.3s;
+}
+
+.col-label .ind.on {
+  background: var(--red-main);
+  box-shadow: 0 0 8px var(--red-dim);
+  animation: blink 1.2s infinite;
+}
+
+.col-meta {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-ghost);
+}
+
+.col-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+/* ============ CAPTURE BAR ============ */
+.capture-bar {
+  padding: 14px 20px;
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--bg-surface);
+  flex-shrink: 0;
+}
+
+.btn-capture {
+  height: 46px;
+  padding: 0 24px;
+  border-radius: var(--radius-m);
+  border: 1.5px solid var(--green-main);
+  background: var(--green-dim);
+  color: var(--green-main);
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  transition: all 0.25s;
+  white-space: nowrap;
+}
+
+.btn-capture:hover { background: rgba(16,185,129,0.2); box-shadow: 0 0 24px var(--green-dim); }
+
+.btn-capture svg { width: 18px; height: 18px; }
+
+.btn-capture.capturing {
+  border-color: var(--red-main);
+  background: var(--red-dim);
+  color: var(--red-main);
+  animation: captureGlow 2s infinite;
+}
+
+@keyframes captureGlow {
+  0%,100% { box-shadow: 0 0 0 0 rgba(244,63,94,0.2); }
+  50% { box-shadow: 0 0 0 8px rgba(244,63,94,0); }
+}
+
+.wave-display {
+  flex: 1;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2.5px;
+  opacity: 0.2;
+  transition: opacity 0.3s;
+}
+
+.wave-display.active { opacity: 1; }
+
+.wave-display .w {
+  width: 2.5px;
+  background: var(--green-main);
+  border-radius: 2px;
+  height: 6px;
+  transition: height 0.08s;
+}
+
+.capture-info {
+  font-size: 11px;
+  color: var(--text-ghost);
+  font-weight: 500;
+  min-width: 100px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.capture-info.on { color: var(--green-main); }
+.capture-info.busy { color: var(--amber-main); }
+
+/* ============ TRANSCRIPT ITEMS ============ */
+.t-item {
+  margin-bottom: 16px;
+  animation: fadeUp 0.35s ease;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+.t-meta {
+  font-size: 9.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-ghost);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.t-meta .ts {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  opacity: 0.5;
+}
+
+.t-block {
+  font-size: 14px;
+  line-height: 1.7;
+  padding: 14px 18px;
+  background: var(--bg-raised);
+  border-radius: var(--radius-m);
+  border-left: 3px solid var(--text-ghost);
+  color: var(--text-primary);
+}
+
+.t-block.interim {
+  color: var(--text-secondary);
+  border-left-color: transparent;
+  font-style: italic;
+  opacity: 0.6;
+}
+
+.t-block.question-highlight {
+  border-left-color: var(--green-main);
+  background: var(--green-dim);
+}
+
+/* Question detected card */
+.q-card {
+  background: rgba(16,185,129,0.06);
+  border: 1px solid rgba(16,185,129,0.15);
+  border-radius: var(--radius-m);
+  padding: 14px 18px;
+  margin-bottom: 14px;
+  animation: popIn 0.4s cubic-bezier(0.16,1,0.3,1);
+}
+
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+
+.q-card .q-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--green-main);
+  margin-bottom: 8px;
+}
+
+.q-card .q-tag svg { width: 13px; height: 13px; }
+
+.q-card .q-body {
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.55;
+}
+
+/* ============ ANSWER CARDS ============ */
+.a-card {
+  background: var(--bg-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-l);
+  padding: 22px;
+  margin-bottom: 16px;
+  animation: slideAnswer 0.5s cubic-bezier(0.16,1,0.3,1);
+  position: relative;
+}
+
+.a-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--gradient-brand);
+  border-radius: var(--radius-l) var(--radius-l) 0 0;
+}
+
+@keyframes slideAnswer {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: none; }
+}
+
+.a-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.a-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--green-main);
+}
+
+.a-badge svg { width: 15px; height: 15px; }
+
+.a-copy {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-s);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-overlay);
+  color: var(--text-ghost);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: all 0.2s;
+}
+
+.a-copy:hover { border-color: var(--green-main); color: var(--green-main); }
+.a-copy svg { width: 13px; height: 13px; }
+
+.a-question {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  font-style: italic;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+  line-height: 1.5;
+}
+
+.a-body {
+  font-size: 14.5px;
+  line-height: 1.85;
+  color: var(--text-primary);
+  font-weight: 400;
+}
+
+.a-body p { margin-bottom: 10px; }
+.a-body p:last-child { margin-bottom: 0; }
+.a-body strong { color: var(--green-main); font-weight: 600; }
+
+/* Typing dots */
+.dots {
+  display: flex;
+  gap: 5px;
+  padding: 14px 0;
+}
+
+.dots span {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--green-main);
+  animation: bounce 1.3s infinite;
+}
+.dots span:nth-child(2) { animation-delay: 0.18s; }
+.dots span:nth-child(3) { animation-delay: 0.36s; }
+
+@keyframes bounce {
+  0%,70%,100% { transform: translateY(0); opacity: 0.25; }
+  35% { transform: translateY(-7px); opacity: 1; }
+}
+
+/* Empty states */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  padding: 40px;
+}
+
+.empty-ico {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  background: var(--bg-overlay);
+  border: 1px solid var(--border-subtle);
+  display: grid;
+  place-items: center;
+  margin-bottom: 16px;
+}
+
+.empty-ico svg { width: 28px; height: 28px; color: var(--text-ghost); }
+
+.empty h3 { font-size: 15px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+.empty p { font-size: 12.5px; color: var(--text-ghost); max-width: 260px; line-height: 1.6; }
+
+/* ============ TOAST ============ */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: var(--bg-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-m);
+  padding: 12px 22px;
+  font-size: 12.5px;
+  font-weight: 500;
+  box-shadow: 0 12px 48px rgba(0,0,0,0.5);
+  z-index: 400;
+  transition: transform 0.4s cubic-bezier(0.16,1,0.3,1);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast.err { border-color: rgba(244,63,94,0.3); color: var(--red-main); }
+.toast.ok { border-color: rgba(16,185,129,0.3); color: var(--green-main); }
+
+/* ============ RESPONSIVE ============ */
+@media (max-width: 800px) {
+  .app { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
+  .col-left { border-right: none; border-bottom: 1px solid var(--border-subtle); }
+  .setup-box { padding: 28px 22px; }
+}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/></svg>
+    </div>
+    <span class="brand-name">GhostHire</span>
+    <span class="brand-tag" id="modelTag">Whisper + GPT-4o</span>
+  </div>
+  <div class="topbar-right">
+    <div class="status-pill" id="statusPill">
+      <span class="pip"></span>
+      <span id="statusLabel">Offline</span>
+    </div>
+    <button class="btn-icon" onclick="openSetup()" title="Settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12.22 2h-.44a2 2 0 00-2 2v.18a2 2 0 01-1 1.73l-.43.25a2 2 0 01-2 0l-.15-.08a2 2 0 00-2.73.73l-.22.38a2 2 0 00.73 2.73l.15.1a2 2 0 011 1.72v.51a2 2 0 01-1 1.74l-.15.09a2 2 0 00-.73 2.73l.22.38a2 2 0 002.73.73l.15-.08a2 2 0 012 0l.43.25a2 2 0 011 1.73V20a2 2 0 002 2h.44a2 2 0 002-2v-.18a2 2 0 011-1.73l.43-.25a2 2 0 012 0l.15.08a2 2 0 002.73-.73l.22-.39a2 2 0 00-.73-2.73l-.15-.08a2 2 0 01-1-1.74v-.5a2 2 0 011-1.74l.15-.09a2 2 0 00.73-2.73l-.22-.38a2 2 0 00-2.73-.73l-.15.08a2 2 0 01-2 0l-.43-.25a2 2 0 01-1-1.73V4a2 2 0 00-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+    </button>
+  </div>
+</header>
+
+<!-- SETUP -->
+<div class="setup-screen" id="setupScreen">
+  <div class="setup-box">
+    <h1>Set Up GhostHire</h1>
+    <p class="subtitle">Your invisible interview copilot. Captures system audio via screen share, transcribes with Whisper, and gives you instant human-sounding answers — no robotic textbook stuff.</p>
+
+    <div class="field">
+      <label>OpenAI API Key</label>
+      <input type="password" id="inKey" placeholder="sk-proj-..." autocomplete="off" spellcheck="false">
+    </div>
+
+    <div class="row-2">
+      <div class="field">
+        <label>Chat Model</label>
+        <select id="inModel">
+          <option value="gpt-4o">GPT-4o (Best)</option>
+          <option value="gpt-4o-mini">GPT-4o Mini (Fast)</option>
+          <option value="gpt-4-turbo">GPT-4 Turbo</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Interview Type</label>
+        <select id="inType">
+          <option value="general">General</option>
+          <option value="technical">Technical / Coding</option>
+          <option value="behavioral">Behavioral (STAR)</option>
+          <option value="system-design">System Design</option>
+          <option value="product">Product / PM</option>
+          <option value="consulting">Case Study</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Your Background (optional — helps personalize answers)</label>
+      <textarea id="inContext" placeholder="e.g. 4 years full-stack dev, React + Node, worked at a fintech startup..."></textarea>
+    </div>
+
+    <button class="btn-go" onclick="launch()">Start Copilot →</button>
+
+    <div class="lock-note">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+      Key stays in your browser only. Never sent anywhere except OpenAI.
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<main class="app">
+  <!-- LEFT: transcript -->
+  <div class="col col-left">
+    <div class="col-head">
+      <div class="col-label"><span class="ind" id="recInd"></span> Live Transcript</div>
+      <button class="btn-icon" onclick="clearLeft()" title="Clear"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+    </div>
+    <div class="col-body" id="leftBody">
+      <div class="empty" id="leftEmpty">
+        <div class="empty-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
+        <h3>Share your screen to begin</h3>
+        <p>Click the button below — pick any screen/tab and enable "Share system audio". We'll handle the rest.</p>
+      </div>
+    </div>
+    <div class="capture-bar">
+      <button class="btn-capture" id="captureBtn" onclick="toggleCapture()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        <span id="captureBtnText">Share Screen + Audio</span>
+      </button>
+      <div class="wave-display" id="waveBox"></div>
+      <span class="capture-info" id="capInfo">Ready</span>
+    </div>
+  </div>
+
+  <!-- RIGHT: answers -->
+  <div class="col col-right">
+    <div class="col-head">
+      <div class="col-label"><span class="ind" style="background:var(--green-main)"></span> AI Answers</div>
+      <span class="col-meta" id="aCount">0 answers</span>
+    </div>
+    <div class="col-body" id="rightBody">
+      <div class="empty" id="rightEmpty">
+        <div class="empty-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div>
+        <h3>Answers show up here</h3>
+        <p>When we catch a question from the interviewer, you'll get a natural, conversational answer instantly.</p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// =============== STATE ===============
+const S = {
+  key: '',
+  model: 'gpt-4o',
+  type: 'general',
+  ctx: '',
+  capturing: false,
+  mediaStream: null,
+  mediaRecorder: null,
+  audioContext: null,
+  analyser: null,
+  chunks: [],
+  sendInterval: null,
+  answerN: 0,
+  recentTranscript: '',
+  processingQ: false,
+};
+
+// Init wave bars
+(function(){
+  const box = document.getElementById('waveBox');
+  for(let i = 0; i < 40; i++){
+    const d = document.createElement('div');
+    d.className = 'w';
+    box.appendChild(d);
+  }
+})();
+
+// =============== SETUP ===============
+function openSetup(){ document.getElementById('setupScreen').classList.remove('gone'); }
+
+function launch(){
+  const k = document.getElementById('inKey').value.trim();
+  if(!k){ toast('Enter your OpenAI API key','err'); return; }
+  if(!k.startsWith('sk-')){ toast('Key should start with sk-','err'); return; }
+
+  S.key = k;
+  S.model = document.getElementById('inModel').value;
+  S.type = document.getElementById('inType').value;
+  S.ctx = document.getElementById('inContext').value.trim();
+
+  document.getElementById('modelTag').textContent = `Whisper + ${S.model.toUpperCase()}`;
+  document.getElementById('setupScreen').classList.add('gone');
+  setStatus('ready');
+  toast('Ready! Hit "Share Screen + Audio" to begin.','ok');
+}
+
+// =============== SCREEN + AUDIO CAPTURE ===============
+async function toggleCapture(){
+  if(!S.key){ toast('Set up your API key first','err'); openSetup(); return; }
+  if(S.capturing) return stopCapture();
+
+  try {
+    // Request screen share WITH system audio
+    const displayStream = await navigator.mediaDevices.getDisplayMedia({
+      video: true,
+      audio: {
+        echoCancellation: false,
+        noiseSuppression: false,
+        autoGainControl: false,
+        sampleRate: 16000,
+      }
+    });
+
+    // Check if audio track exists
+    const audioTracks = displayStream.getAudioTracks();
+    if(audioTracks.length === 0){
+      displayStream.getTracks().forEach(t => t.stop());
+      toast('No system audio detected! Make sure you checked "Share system audio" in the dialog.','err');
+      return;
+    }
+
+    // We only need the audio track
+    const videoTracks = displayStream.getVideoTracks();
+
+    S.mediaStream = displayStream;
+
+    // Setup analyser for wave viz
+    S.audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+    const source = S.audioContext.createMediaStreamSource(new MediaStream(audioTracks));
+    S.analyser = S.audioContext.createAnalyser();
+    S.analyser.fftSize = 128;
+    source.connect(S.analyser);
+
+    // Start recording in chunks
+    // Create audio-only stream for MediaRecorder
+    const audioOnlyStream = new MediaStream(audioTracks);
+    
+    // Try different MIME types
+    let mimeType = 'audio/webm;codecs=opus';
+    if (!MediaRecorder.isTypeSupported(mimeType)) {
+      mimeType = 'audio/webm';
+      if (!MediaRecorder.isTypeSupported(mimeType)) {
+        mimeType = 'audio/ogg;codecs=opus';
+        if (!MediaRecorder.isTypeSupported(mimeType)) {
+          mimeType = ''; // Let browser decide
+        }
+      }
+    }
+
+    const recorderOptions = mimeType ? { mimeType } : {};
+    S.mediaRecorder = new MediaRecorder(audioOnlyStream, recorderOptions);
+    S.chunks = [];
+
+    S.mediaRecorder.ondataavailable = (e) => {
+      if(e.data.size > 0) S.chunks.push(e.data);
+    };
+
+    S.mediaRecorder.onstop = () => {
+      processAudioChunks();
+    };
+
+    // When user stops screen share from browser UI
+    displayStream.getVideoTracks()[0]?.addEventListener('ended', () => { stopCapture(); });
+    audioTracks[0]?.addEventListener('ended', () => { stopCapture(); });
+
+    S.capturing = true;
+    S.mediaRecorder.start();
+
+    // Every 5 seconds, stop recorder to flush, send to Whisper, then restart
+    S.sendInterval = setInterval(() => {
+      if(S.mediaRecorder && S.mediaRecorder.state === 'recording'){
+        S.mediaRecorder.stop(); // triggers onstop -> processAudioChunks
+      }
+    }, 5000);
+
+    // UI updates
+    document.getElementById('captureBtn').classList.add('capturing');
+    document.getElementById('captureBtnText').textContent = 'Stop Capture';
+    document.getElementById('waveBox').classList.add('active');
+    document.getElementById('recInd').classList.add('on');
+    document.getElementById('leftEmpty').style.display = 'none';
+    setStatus('live');
+    animateWave();
+
+  } catch(err) {
+    console.error('Capture error:', err);
+    if(err.name === 'NotAllowedError'){
+      toast('Screen share was cancelled','err');
+    } else {
+      toast('Could not start capture: ' + err.message,'err');
+    }
+  }
+}
+
+function stopCapture(){
+  S.capturing = false;
+  clearInterval(S.sendInterval);
+
+  if(S.mediaRecorder && S.mediaRecorder.state !== 'inactive'){
+    S.mediaRecorder.stop();
+  }
+
+  if(S.mediaStream){
+    S.mediaStream.getTracks().forEach(t => t.stop());
+    S.mediaStream = null;
+  }
+
+  if(S.audioContext){
+    S.audioContext.close();
+    S.audioContext = null;
+    S.analyser = null;
+  }
+
+  document.getElementById('captureBtn').classList.remove('capturing');
+  document.getElementById('captureBtnText').textContent = 'Share Screen + Audio';
+  document.getElementById('waveBox').classList.remove('active');
+  document.getElementById('recInd').classList.remove('on');
+  document.getElementById('capInfo').textContent = 'Stopped';
+  document.getElementById('capInfo').className = 'capture-info';
+  setStatus('ready');
+}
+
+// =============== WHISPER TRANSCRIPTION ===============
+async function processAudioChunks(){
+  if(S.chunks.length === 0){
+    if(S.capturing) restartRecorder();
+    return;
+  }
+
+  const blob = new Blob(S.chunks, { type: S.mediaRecorder?.mimeType || 'audio/webm' });
+  S.chunks = [];
+
+  // Restart recorder immediately so we don't miss audio
+  if(S.capturing) restartRecorder();
+
+  // Skip tiny blobs (silence / too short)
+  if(blob.size < 5000) return;
+
+  document.getElementById('capInfo').textContent = 'Transcribing...';
+  document.getElementById('capInfo').className = 'capture-info busy';
+
+  try {
+    const formData = new FormData();
+    formData.append('file', blob, 'audio.webm');
+    formData.append('model', 'whisper-1');
+    formData.append('language', 'en');
+    formData.append('response_format', 'text');
+
+    const resp = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${S.key}` },
+      body: formData,
+    });
+
+    if(!resp.ok){
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.error?.message || `HTTP ${resp.status}`);
+    }
+
+    let text = await resp.text();
+    text = text.trim();
+
+    if(text && text.length > 2 && !isJunkTranscript(text)){
+      addTranscript(text);
+      S.recentTranscript += ' ' + text;
+
+      // Check for questions
+      if(!S.processingQ){
+        clearTimeout(S.questionTimer);
+        S.questionTimer = setTimeout(() => detectQuestion(), 1200);
+      }
+    }
+
+    document.getElementById('capInfo').textContent = S.capturing ? 'Listening...' : 'Stopped';
+    document.getElementById('capInfo').className = S.capturing ? 'capture-info on' : 'capture-info';
+
+  } catch(err){
+    console.error('Whisper error:', err);
+    document.getElementById('capInfo').textContent = 'Listening...';
+    document.getElementById('capInfo').className = 'capture-info on';
+    // Don't show toast for every chunk error — just keep going
+  }
+}
+
+function restartRecorder(){
+  if(!S.capturing || !S.mediaStream) return;
+  const audioTracks = S.mediaStream.getAudioTracks();
+  if(audioTracks.length === 0) return;
+
+  const audioOnlyStream = new MediaStream(audioTracks);
+  let mimeType = 'audio/webm;codecs=opus';
+  if(!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'audio/webm';
+  if(!MediaRecorder.isTypeSupported(mimeType)) mimeType = '';
+
+  const opts = mimeType ? { mimeType } : {};
+  S.mediaRecorder = new MediaRecorder(audioOnlyStream, opts);
+  S.chunks = [];
+
+  S.mediaRecorder.ondataavailable = (e) => {
+    if(e.data.size > 0) S.chunks.push(e.data);
+  };
+
+  S.mediaRecorder.onstop = () => { processAudioChunks(); };
+  S.mediaRecorder.start();
+}
+
+function isJunkTranscript(t){
+  const junk = ['you','thank you','thanks','bye','okay','um','uh','hmm','huh','yeah','yes','no','so','the','and','','[silence]','[music]','[blank_audio]','...'];
+  const lower = t.toLowerCase().replace(/[^a-z ]/g,'').trim();
+  return junk.includes(lower) || lower.length < 3;
+}
+
+// =============== QUESTION DETECTION + ANSWER ===============
+async function detectQuestion(){
+  const text = S.recentTranscript.trim();
+  if(!text || text.length < 15){
+    S.recentTranscript = '';
+    return;
+  }
+
+  S.recentTranscript = '';
+  S.processingQ = true;
+
+  try {
+    // Detect question
+    const detectResp = await callGPT([
+      { role: 'system', content: 'You detect interview questions from transcribed audio. Given a transcript chunk, determine if it contains an interview question. Reply ONLY in JSON (no markdown): {"found":true/false,"question":"the clean question text"}. If multiple questions, pick the most important one.' },
+      { role: 'user', content: `Transcript: "${text}"` }
+    ], 200);
+
+    let parsed;
+    try {
+      parsed = JSON.parse(detectResp.replace(/```json|```/g,'').trim());
+    } catch(e){
+      if(text.includes('?')){ parsed = { found: true, question: text }; }
+      else { S.processingQ = false; return; }
+    }
+
+    if(!parsed.found){ S.processingQ = false; return; }
+
+    const question = parsed.question || text;
+    showQuestionCard(question);
+
+    // Generate answer
+    showTyping();
+    const answer = await callGPT(buildAnswerMessages(question), 1200);
+    removeTyping();
+    showAnswerCard(question, answer);
+
+    S.answerN++;
+    document.getElementById('aCount').textContent = `${S.answerN} answer${S.answerN !== 1 ? 's' : ''}`;
+
+  } catch(err){
+    removeTyping();
+    console.error('GPT error:', err);
+    toast('API error: ' + err.message, 'err');
+  }
+
+  S.processingQ = false;
+}
+
+async function callGPT(messages, maxTokens){
+  const r = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${S.key}` },
+    body: JSON.stringify({ model: S.model, messages, max_tokens: maxTokens, temperature: 0.8 }),
+  });
+  if(!r.ok){
+    const e = await r.json().catch(() => ({}));
+    throw new Error(e.error?.message || `HTTP ${r.status}`);
+  }
+  const d = await r.json();
+  return d.choices[0].message.content;
+}
+
+function buildAnswerMessages(question){
+  const guides = {
+    general: 'Give answers like a confident, friendly human — not a textbook.',
+    technical: 'Explain technical stuff clearly but like you\'re talking to a smart colleague, not reading docs.',
+    behavioral: 'Use STAR format but make it sound like you\'re naturally telling a story, not filling a template.',
+    'system-design': 'Walk through the design like you\'re whiteboarding with a friend — casual but smart.',
+    product: 'Think like a sharp PM — be structured but conversational, not robotic.',
+    consulting: 'Break down the case logically but talk like a human, not a McKinsey slide.',
+  };
+
+  const guide = guides[S.type] || guides.general;
+  const bgNote = S.ctx ? `\n\nThe candidate\'s background: ${S.ctx}` : '';
+
+  return [
+    { role: 'system', content: `You are a brilliant interview coach who gives answers the way a real, confident human would actually say them out loud. ${guide}${bgNote}
+
+CRITICAL RULES:
+- Sound like a real person talking, NOT like ChatGPT or a textbook
+- Use casual connectors like "So basically...", "The way I see it...", "Honestly...", "Here's the thing..."
+- Keep it concise — 100 to 200 words max. Interviewers hate long rambling answers
+- Use first person ("I", "my experience")
+- No bullet points or markdown formatting — just natural flowing speech
+- Include one specific example or number if possible
+- End strong — don't trail off
+- NO phrases like "Great question!", "That's a fantastic question", "I'm glad you asked"
+- NO corporate buzzwords like "leverage", "synergy", "streamline"
+- Sound confident but not arrogant` },
+    { role: 'user', content: `The interviewer just asked: "${question}"\n\nGive me a killer answer I can say naturally.` }
+  ];
+}
+
+// =============== UI HELPERS ===============
+function addTranscript(text){
+  const now = new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+  const el = document.createElement('div');
+  el.className = 't-item';
+  el.innerHTML = `<div class="t-meta"><span>Captured</span><span class="ts">${now}</span></div><div class="t-block">${esc(text)}</div>`;
+  document.getElementById('leftBody').appendChild(el);
+  scrollBot('leftBody');
+}
+
+function showQuestionCard(q){
+  const el = document.createElement('div');
+  el.className = 'q-card';
+  el.innerHTML = `<div class="q-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Question Detected</div><div class="q-body">${esc(q)}</div>`;
+  document.getElementById('leftBody').appendChild(el);
+  scrollBot('leftBody');
+}
+
+function showTyping(){
+  document.getElementById('rightEmpty')?.remove();
+  const el = document.createElement('div');
+  el.className = 'a-card';
+  el.id = 'typingCard';
+  el.innerHTML = `<div class="a-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h.01M12 12h.01M16 12h.01"/></svg> Thinking...</div><div class="dots"><span></span><span></span><span></span></div>`;
+  document.getElementById('rightBody').appendChild(el);
+  scrollBot('rightBody');
+}
+
+function removeTyping(){ document.getElementById('typingCard')?.remove(); }
+
+function showAnswerCard(question, answer){
+  const el = document.createElement('div');
+  el.className = 'a-card';
+  const htmlAnswer = answer.replace(/\n\n/g,'</p><p>').replace(/\n/g,'<br>');
+
+  el.innerHTML = `
+    <div class="a-top">
+      <div class="a-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Answer Ready</div>
+      <button class="a-copy" onclick="copyA(this)" title="Copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>
+    </div>
+    <div class="a-question">"${esc(question)}"</div>
+    <div class="a-body"><p>${htmlAnswer}</p></div>
+  `;
+  el.dataset.raw = answer;
+  document.getElementById('rightBody').appendChild(el);
+  scrollBot('rightBody');
+}
+
+function copyA(btn){
+  const raw = btn.closest('.a-card').dataset.raw;
+  navigator.clipboard.writeText(raw).then(() => toast('Copied!','ok')).catch(() => toast('Copy failed','err'));
+}
+
+// =============== WAVE VIZ ===============
+let waveRAF;
+function animateWave(){
+  const bars = document.querySelectorAll('.wave-display .w');
+  const bufLen = S.analyser ? S.analyser.frequencyBinCount : 0;
+  const data = new Uint8Array(bufLen);
+
+  function tick(){
+    if(!S.capturing) return;
+    if(S.analyser){
+      S.analyser.getByteFrequencyData(data);
+      bars.forEach((b, i) => {
+        const idx = Math.floor(i / bars.length * bufLen);
+        const val = data[idx] || 0;
+        const h = Math.max(4, (val / 255) * 34);
+        b.style.height = h + 'px';
+        b.style.opacity = 0.4 + (val/255)*0.6;
+      });
+    } else {
+      bars.forEach(b => { b.style.height = (Math.random()*18 + 4) + 'px'; });
+    }
+    waveRAF = requestAnimationFrame(tick);
+  }
+  tick();
+}
+
+// =============== UTILITY ===============
+function esc(s){ const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function scrollBot(id){ const el = document.getElementById(id); setTimeout(() => el.scrollTop = el.scrollHeight, 60); }
+
+function setStatus(s){
+  const pill = document.getElementById('statusPill');
+  const label = document.getElementById('statusLabel');
+  pill.classList.remove('live');
+  if(s === 'live'){ pill.classList.add('live'); label.textContent = 'Capturing'; }
+  else if(s === 'ready'){ label.textContent = 'Ready'; }
+  else { label.textContent = 'Offline'; }
+}
+
+function clearLeft(){
+  const body = document.getElementById('leftBody');
+  body.innerHTML = '';
+  S.recentTranscript = '';
+}
+
+function toast(msg, type=''){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+</script>
+</body>
+</html>
